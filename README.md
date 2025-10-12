@@ -10,19 +10,24 @@ The purpose of this project is to provide an adaptible software that runs in Win
 
 
 #### Dependencies:  
-Python 3.10+ (e.g. version 3.13.7)  
-git (e.g. version 2.51.0.windows.1)  
-
+```
+Python 3.10+ (e.g. version 3.13.7)   
+git (e.g. version 2.51.0.windows.1)   
+```
 #### Libraries:  
+```
 fastapi>=0.115.0  
 uvicorn[standard]>=0.30.0  
 httpx>=0.27.0  
 pydantic>=2.7.0  
 psutil>=5.9.8  
+```
 
 #### Module Libraries: 
-ollama (e.g. version 0.11.8)
+```
+ollama (e.g. version 0.11.8)   
 ComfyUI (e.g. version 0.3.64)  
+```
 
 ####  Development rules:   
 1: Target low-cost deployment across the maximum number of computers.    
@@ -58,7 +63,7 @@ ComfyUI (e.g. version 0.3.64)
 # cd to .\rendersync\
 .\run.ps1
 _____________________________
-# ollama models
+# ollama utils
 ollama pull llama3.2:3b 
 ollama pull gemma3:1b
 ollama list  
