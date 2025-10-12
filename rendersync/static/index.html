@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rendersync</title>
+    <link rel="icon" href="data:image/svg+xml,<svg viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/script.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <p>rendersync core</p>
+            
+        </div>
+
+        <div class="module">
+            <p><button onclick="toggleModule('network-module')" class="module-collapse-btn">-</button>(network module)</p>
+            <div id="network-module">
+                <br>
+                <button id="refresh-system-info" onclick="loadSystemInfo()">Get System Info</button>
+                <button id="refresh-network-info" onclick="loadNetworkInfo()">Get Network Info</button>
+                <button id="refresh-terminal-info" onclick="loadTerminalInfo()">Get Terminal Info</button>
+                <button id="refresh-apps-running-info" onclick="loadAppsRunningInfo()">Apps Running Info</button>
+
+            <table class="system-table">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody id="system-info-rows">
+                </tbody>
+            </table>
+            <table class="network-table">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody id="network-info-rows">
+                </tbody>
+            </table>
+            <table class="system-table">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody id="terminal-info-rows">
+                </tbody>
+            </table>
+            <table class="system-table">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody id="apps-running-info-rows">
+                </tbody>
+            </table>
+            </div>
+        </div>
+
+        <div class="module">
+            <p><button onclick="toggleModule('interaction-module')" class="module-collapse-btn">-</button>(interaction module)</p>
+            <div id="interaction-module">
+            <br>
+            <input type="number" id="port-input" placeholder="(1-65535)" min="1" max="65535" style="padding: 10px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; ">
+            <button id="inspect-port" onclick="inspectPort()">Inspect Port</button>
+            <table class="system-table">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody id="port-inspection-rows">
+                </tbody>
+            </table>
+            <br>
+            <input type="text" id="pid-input" placeholder="Enter PID number" style="padding: 10px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; ">
+            <button id="inspect-pid" onclick="inspectPID()">Inspect PID</button>
+            <table class="system-table">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody id="pid-inspection-rows">
+                </tbody>
+            </table>
+            <br>
+            <input type="text" id="ping-input" placeholder="IP address or hostname" style="padding: 10px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; width: 200px; ">
+            <input type="number" id="ping-port-input" placeholder="Port (optional)" min="1" max="65535" style="padding: 10px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; width: 120px; ">
+            <button id="ping-ip" onclick="pingIP()">Ping IP</button>
+            <table class="system-table">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody id="ping-results-rows">
+                </tbody>
+            </table>
+            <br>
+            </div>
+        </div>
+
+        <div class="module">
+            <p><button onclick="toggleModule('inference-module')" class="module-collapse-btn">-</button>(inference module)</p>
+            <div id="inference-module">
+                <br>
+                <div class="submodule">
+                    <p><button onclick="toggleModule('ollama-submodule')" class="module-collapse-btn">-</button>(submodule ollama)</p>
+                    <div id="ollama-submodule">
+                    <br>
+                    <button id="inspect-ollama" onclick="inspectOllama()">Inspect ollama</button>
+                    <table class="system-table">
+                        <thead>
+                            <tr>
+                                <th>Property</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ollama-info-rows">
+                        </tbody>
+                    </table>
+
+                    <br>
+
+                    <button id="start-ollama" onclick="startOllama()">Start ollama</button>
+                    <button id="stop-ollama" onclick="stopOllama()">Stop ollama</button>
+                    <button id="get-models" onclick="getOllamaModels()">Get ollama Models</button>
+
+                    <table class="system-table">
+                        <thead>
+                            <tr>
+                                <th>Property</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ollama-action-rows">
+                        </tbody>
+                    </table>
+
+                    <br>
+                    <input type="text" id="ollama-query-input" placeholder="Enter your question for Ollama" style="padding: 10px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; width: 300px;">
+                    <select id="ollama-model-select" style="padding: 10px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
+                        <option value="">Select Model</option>
+                    </select>
+                    <button id="query-ollama" onclick="queryOllama()">Query ollama</button>
+                    
+                    <div id="ollama-chat" class="ollama-chat">
+                    </div>
+                    </div>
+                </div>
+
+                <br>
+
+                <div class="submodule">
+                    <p><button onclick="toggleModule('comfyui-submodule')" class="module-collapse-btn">-</button>(submodule comfyui)</p>
+                    <div id="comfyui-submodule">
+                    <br>
+                    <button id="inspect-comfyui" onclick="inspectComfyUI()">Inspect comfyui</button>
+                    <table class="system-table">
+                        <thead>
+                            <tr>
+                                <th>Property</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comfyui-info-rows">
+                        </tbody>
+                    </table>
+
+                    <br>
+
+                    <button id="start-comfyui" onclick="startComfyUI()">Start comfyui</button>
+                    <button id="stop-comfyui" onclick="stopComfyUI()">Stop comfyui</button>
+
+                    <table class="system-table">
+                        <thead>
+                            <tr>
+                                <th>Property</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comfyui-action-rows">
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+
+                <br>
+                
+            </div>
+        </div>
+
+        <div class="module">
+            <p><button onclick="toggleModule('training-module')" class="module-collapse-btn">-</button>(training module)</p>
+            <div id="training-module">
+                <br><br>
+            </div>
+        </div>
+
+        
+
+    </div>
+</body>
+</html>
+
+

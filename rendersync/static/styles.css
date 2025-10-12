@@ -1,0 +1,232 @@
+/* ======================================================================================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    font-family: 'Segoe UI', 'Aptos', 'SF Pro Display', 'Helvetica Neue', 'Arial', sans-serif;
+    background: hsl(0, 0%, 100%);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-bottom: 40px;
+}
+
+
+
+
+.container {
+    width: calc(100% - 4%);
+    margin: 2% auto;
+    border-radius: 10px;
+    background-color: #ffffff;
+    padding: 20px;
+    box-sizing: border-box;
+    border: 2px solid #000000;
+}
+
+.header {
+    text-align: left;
+    padding: 20px;
+    background: hsl(229, 100%, 76%);
+    border-radius: 10px;
+    border: 2px solid #ff0000;
+
+}
+
+
+/* ======================================================================================= */
+
+.module {
+    margin: 10px auto;
+    padding: 20px;
+    background: hsl(229, 100%, 76%);
+    border-radius: 10px;
+    border: 2px solid #ff0000;
+
+}
+
+.module h2 {
+    margin-top: 0;
+    color: #333;
+}
+
+/* Shared button styling */
+button {
+    font-family: 'Segoe UI', 'Aptos', 'SF Pro Display', 'Helvetica Neue', 'Arial', sans-serif;
+    border: none;
+    padding: 10px;
+    font-size: 14px;    
+    border-radius: 4px;
+    background: #e9ecef;
+    transition: background-color;
+}
+
+button:hover {
+    background-color: #5a6268;
+}
+
+button:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+/* Module collapse button */
+.module-collapse-btn {
+    font-size: 14px;
+    padding: 0;
+    margin-right: 8px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border: 1px solid #ccc;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+
+
+/* ======================================================================================= */
+
+/* Status/info boxes */
+.status-box {
+    margin-top: 15px;
+    padding: 10px;
+    background: #e9ecef;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* System table */
+.system-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    border: 1px solid grey;
+    background-color: #e9ecef;
+    font-size: 12px;
+    border-radius: 4px;
+}
+
+.system-table th,
+.system-table td {
+    border: 1px solid grey;
+    padding: 2px;
+    font-weight: normal;
+    word-wrap: break-word;
+    max-width: 300px;
+}
+
+/* Network table */
+.network-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    border: 1px solid grey;
+    background-color: #e9ecef;
+    font-size: 12px;
+    border-radius: 4px;
+}
+
+.network-table th,
+.network-table td {
+    border: 1px solid grey;
+    padding: 2px;
+    font-weight: normal;
+}
+
+/* ======================================================================================= */
+/* OLLAMA CHAT STYLES */
+/* ======================================================================================= */
+
+.ollama-chat {
+    margin-top: 15px;
+    padding: 15px;
+    font-size: 13px;
+    font-family: 'Segoe UI', 'Aptos', 'SF Pro Display', 'Helvetica Neue', 'Arial', sans-serif;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    border: 1px solid #333;
+    border-radius: 4px;
+    min-height: 200px;
+    max-height: 400px;
+    overflow-y: auto;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.ollama-chat div {
+    margin-bottom: 2px;
+    padding: 2px 0;
+}
+
+.ollama-chat div:first-child {
+    margin-top: 0;
+}
+
+.ollama-chat strong {
+    color: #4fc3f7;
+    font-weight: bold;
+}
+
+.ollama-chat em {
+    color: #ffeb3b;
+    font-style: italic;
+}
+
+.ollama-chat code {
+    background-color: #2d2d2d;
+    color: #f8f8f2;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+}
+
+.ollama-chat pre {
+    background-color: #2d2d2d;
+    color: #f8f8f2;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 8px 0;
+    overflow-x: auto;
+    border-left: 3px solid #4fc3f7;
+}
+
+.ollama-chat pre code {
+    background: none;
+    padding: 0;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.ollama-chat a {
+    color: #66b3ff;
+    text-decoration: underline;
+}
+
+.ollama-chat a:hover {
+    color: #99ccff;
+    text-decoration: underline;
+}
+
+/* ======================================================================================= */
+/* SUBMODULE STYLES */
+/* ======================================================================================= */
+
+.submodule {
+    margin: 10px 0 10px 20px;
+    padding: 15px;
+    background: hsla(229, 100%, 50%, 0);
+    border: 1px solid #000000;
+    border-radius: 10px;
+}
