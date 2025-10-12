@@ -53,8 +53,8 @@ ComfyUI (e.g. version 0.3.64)
     - Host OS inspector, terminals, PID, IPs, network utilities  
     - Modules: `interaction.py`, `network.py`, `system.py`, `ollama.py`, `comfyui.py`, `utilities.py`
 - Submodules
-    - Ollama: Inspect, Start/Stop and chat with models  
-    - ComfyUI: Inspect, Start/Stop
+    - Ollama: Inspect, Start/Stop, chat with models  
+    - ComfyUI: Inspect, Start/Stop, submit example workflow
 
 
 ##### Reproduce Windows 11
