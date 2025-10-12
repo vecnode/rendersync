@@ -72,6 +72,7 @@ ollama list
 
 #### In development
 
+- Add a global open/close of endpoints.
 - Add trainer file as module - fine-tuning stack to see.
 - Check more Host OSs, multiple machines.
 - Available Models in every system that we have to download and everything. in one line with the combo.  Comfy too

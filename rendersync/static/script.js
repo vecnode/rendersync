@@ -1292,5 +1292,168 @@ async function startComfyUI() {
 }
 
 // ============================================================================
+// COMFYUI WORKFLOW SUBMISSION FUNCTIONS
+// ============================================================================
+
+async function submitWorkflow() {
+    const button = document.getElementById('submit-workflow');
+    const rows = document.getElementById('comfyui-action-rows');
+    
+    button.disabled = true;
+    button.textContent = 'Submitting';
+    rows.innerHTML = '<tr><td colspan="2" style="color: blue;">Submitting workflow to ComfyUI</td></tr>';
+    
+    try {
+        // Load the default workflow from the workflows directory
+        const workflowPath = '/workflows/sd_text_to_image.json';
+        
+        const response = await fetch(workflowPath);
+        if (!response.ok) {
+            throw new Error(`Failed to load workflow file: ${response.status}`);
+        }
+        
+        const workflowData = await response.json();
+        
+        // Debug logging
+        console.log('Loaded workflow data:', workflowData);
+        console.log('Workflow keys:', Object.keys(workflowData));
+        console.log('Nodes type:', typeof workflowData.nodes);
+        console.log('Nodes length:', Array.isArray(workflowData.nodes) ? workflowData.nodes.length : Object.keys(workflowData.nodes).length);
+        
+        if (Array.isArray(workflowData.nodes)) {
+            workflowData.nodes.forEach((node, i) => {
+                console.log(`Node ${i}: id=${node.id}, type=${node.type}`);
+            });
+        } else if (workflowData.nodes && typeof workflowData.nodes === 'object') {
+            Object.entries(workflowData.nodes).forEach(([id, node]) => {
+                console.log(`Node ${id}: class_type=${node.class_type}`);
+            });
+        }
+        
+        // Submit the workflow to ComfyUI
+        const submitResponse = await fetch('/api/comfyui-submit-workflow', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                workflow: workflowData
+                // No base_url specified - will auto-detect ComfyUI port
+            })
+        });
+        
+        const result = await submitResponse.json();
+        
+        const rowData = [];
+        
+        if (result.success) {
+            rowData.push(['Output', 'Workflow submitted successfully']);
+            rowData.push(['Prompt ID', result.prompt_id]);
+            rowData.push(['Status', 'Queued for execution']);
+            rowData.push(['ComfyUI URL', '<a href="http://127.0.0.1:8188" target="_blank">http://127.0.0.1:8188</a>']);
+        } else {
+            rowData.push(['Output', 'Failed to submit workflow']);
+            rowData.push(['Error', result.error]);
+            if (result.connection_error) {
+                rowData.push(['Note', 'Make sure ComfyUI is running on port 8188']);
+            }
+        }
+        
+        // Display all data in table format
+        if (rowData.length === 0) {
+            rows.innerHTML = '<tr><td colspan="2">No submission data available</td></tr>';
+        } else {
+            rows.innerHTML = rowData.map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td></tr>`).join('');
+        }
+        
+    } catch (error) {
+        rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error submitting workflow: ${error.message}</td></tr>`;
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Submit Workflow';
+    }
+}
+
+// ============================================================================
+// COMFYUI WORKFLOW SUBMISSION
+// ============================================================================
+
+async function submitWorkflow() {
+    const button = document.getElementById('submit-workflow');
+    const rows = document.getElementById('comfyui-action-rows');
+    
+    button.disabled = true;
+    button.textContent = 'Submitting';
+    rows.innerHTML = '<tr><td colspan="2" style="color: blue;">Submitting workflow to ComfyUI</td></tr>';
+    
+    try {
+        const workflowPath = '/workflows/sd_text_to_image.json'; // Using original workflow
+        
+        const response = await fetch(workflowPath);
+        if (!response.ok) {
+            throw new Error(`Failed to load workflow file: ${response.status}`);
+        }
+        
+        const workflowData = await response.json();
+        
+        // Debug logging
+        console.log('Loaded workflow data:', workflowData);
+        console.log('Workflow keys:', Object.keys(workflowData));
+        console.log('Nodes type:', typeof workflowData.nodes);
+        console.log('Nodes length:', Array.isArray(workflowData.nodes) ? workflowData.nodes.length : Object.keys(workflowData.nodes).length);
+        
+        if (Array.isArray(workflowData.nodes)) {
+            workflowData.nodes.forEach((node, i) => {
+                console.log(`Node ${i}: id=${node.id}, type=${node.type}`);
+            });
+        } else if (workflowData.nodes && typeof workflowData.nodes === 'object') {
+            Object.entries(workflowData.nodes).forEach(([id, node]) => {
+                console.log(`Node ${id}: class_type=${node.class_type}`);
+            });
+        }
+        
+        const submitResponse = await fetch('/api/comfyui-submit-workflow', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                workflow: workflowData
+                // No base_url specified - will auto-detect ComfyUI port
+            })
+        });
+        
+        const result = await submitResponse.json();
+        
+        const rowData = [];
+        
+        if (result.success) {
+            rowData.push(['Output', 'Workflow submitted successfully']);
+            rowData.push(['Prompt ID', result.prompt_id]);
+            rowData.push(['Status', 'Queued for execution']);
+            rowData.push(['ComfyUI URL', '<a href="http://127.0.0.1:8188" target="_blank">http://127.0.0.1:8188</a>']);
+        } else {
+            rowData.push(['Output', 'Failed to submit workflow']);
+            rowData.push(['Error', result.error]);
+            if (result.connection_error) {
+                rowData.push(['Note', 'Make sure ComfyUI is running on port 8188']);
+            }
+        }
+        
+        if (rowData.length === 0) {
+            rows.innerHTML = '<tr><td colspan="2">No submission data available</td></tr>';
+        } else {
+            rows.innerHTML = rowData.map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td></tr>`).join('');
+        }
+        
+    } catch (error) {
+        rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error submitting workflow: ${error.message}</td></tr>`;
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Submit Workflow';
+    }
+}
+
+// ============================================================================
 // END OF RENDERSYNC CORE JAVASCRIPT
 // ============================================================================

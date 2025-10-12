@@ -8,7 +8,7 @@ import os
 import socket
 import psutil
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -20,6 +20,7 @@ from .modules.interaction import inspect_port
 from .modules.utilities import track_spawned_process, check_application_timeout, cleanup_processes, get_application_status, get_terminal_info, get_apps_running_info
 from .modules.ollama import OllamaManager, OllamaClient
 from .modules.comfyui import ComfyUIManager
+from .comfy_api import ComfyUIClient, load_workflow_from_file
 
 
 # ================================================================================
@@ -56,6 +57,12 @@ from .modules.comfyui import ComfyUIManager
 # GET    /api/comfyui-status         ComfyUI installation and runtime status
 # POST   /api/comfyui-stop           Terminate ComfyUI processes
 # POST   /api/comfyui-start          Launch ComfyUI service (Windows)
+# POST   /api/comfyui-submit-workflow Submit workflow to ComfyUI
+# GET    /api/comfyui-queue          Get ComfyUI queue status
+# GET    /api/comfyui-history/{prompt_id} Get workflow execution history
+# POST   /api/comfyui-interrupt      Interrupt current ComfyUI execution
+# GET    /api/comfyui-system-stats   Get ComfyUI system statistics
+# GET    /workflows/{filename}       Serve workflow JSON files
 #
 # ================================================================================
 
@@ -518,5 +525,88 @@ async def apps_running_info():
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get apps running info: {str(e)}")
+
+
+@app.post("/api/comfyui-submit-workflow")
+async def comfyui_submit_workflow(request: dict):
+    """Submit a workflow to ComfyUI for execution."""
+    try:
+        workflow_data = request.get("workflow")
+        base_url = request.get("base_url")  # None means auto-detect
+        
+        if not workflow_data:
+            raise HTTPException(status_code=400, detail="Workflow data is required")
+        
+        client = ComfyUIClient(base_url)
+        result = await client.submit_workflow(workflow_data)
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to submit workflow: {str(e)}")
+
+
+@app.get("/api/comfyui-queue")
+async def comfyui_queue(request: Request):
+    """Get ComfyUI queue status."""
+    try:
+        base_url = request.query_params.get("base_url")  # None means auto-detect
+        client = ComfyUIClient(base_url)
+        result = await client.get_queue_status()
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get queue status: {str(e)}")
+
+
+@app.get("/api/comfyui-history/{prompt_id}")
+async def comfyui_history(prompt_id: str, request: Request):
+    """Get workflow execution history."""
+    try:
+        base_url = request.query_params.get("base_url")  # None means auto-detect
+        client = ComfyUIClient(base_url)
+        result = await client.get_history(prompt_id)
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get history: {str(e)}")
+
+
+
+@app.get("/workflows/{filename}")
+async def serve_workflow(filename: str):
+    """Serve workflow JSON files."""
+    workflows_dir = os.path.join(os.path.dirname(__file__), "workflows")
+    file_path = os.path.join(workflows_dir, filename)
+    
+    if os.path.exists(file_path) and filename.endswith('.json'):
+        return FileResponse(file_path, media_type="application/json")
+    else:
+        raise HTTPException(status_code=404, detail="Workflow file not found")
+
+
+@app.post("/api/comfyui-interrupt")
+async def comfyui_interrupt(request: dict):
+    """Interrupt current ComfyUI execution."""
+    try:
+        base_url = request.get("base_url")  # None means auto-detect
+        client = ComfyUIClient(base_url)
+        result = await client.interrupt_execution()
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to interrupt execution: {str(e)}")
+
+
+@app.get("/api/comfyui-system-stats")
+async def comfyui_system_stats(request: Request):
+    """Get ComfyUI system statistics."""
+    try:
+        base_url = request.query_params.get("base_url")  # None means auto-detect
+        client = ComfyUIClient(base_url)
+        result = await client.get_system_stats()
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get system stats: {str(e)}")
 
 
