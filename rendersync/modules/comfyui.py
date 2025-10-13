@@ -5,7 +5,6 @@ import socket
 import json
 import logging
 import os
-import shutil
 from typing import Dict, Any, Optional
 import httpx
 
@@ -19,7 +18,44 @@ class ComfyUIManager:
         self.comfyui_process: Optional[subprocess.Popen] = None
         self.comfyui_pid: Optional[int] = None
         self.is_external_process = False
-        self.base_url = "http://127.0.0.1:8188"
+        # Auto-detect ComfyUI port on initialization
+        self.base_url = self._get_comfyui_url()
+    
+    def _get_comfyui_url(self) -> str:
+        """Get ComfyUI URL by detecting the correct port."""
+        # Common ComfyUI ports in order of preference
+        common_ports = [8188, 8189, 8190, 8080, 8000]
+        
+        for port in common_ports:
+            if self.is_port_in_use(port):
+                # Test if this port is actually serving ComfyUI
+                if self._test_comfyui_port(port):
+                    logger.info(f"Detected ComfyUI running on port {port}")
+                    return f"http://127.0.0.1:{port}"
+        
+        # Default to standard ComfyUI port
+        logger.info("Using default ComfyUI port 8188")
+        return "http://127.0.0.1:8188"
+    
+    def _test_comfyui_port(self, port: int) -> bool:
+        """Test if a port is serving ComfyUI by checking for API endpoints."""
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(1.0)
+                result = s.connect_ex(('127.0.0.1', port))
+                if result == 0:
+                    # Port is open, try to verify it's ComfyUI by making a quick HTTP request
+                    try:
+                        import httpx
+                        with httpx.Client(timeout=2.0) as client:
+                            response = client.get(f"http://127.0.0.1:{port}/system_stats")
+                            return response.status_code == 200
+                    except Exception:
+                        # If HTTP check fails, assume it's ComfyUI if port is open
+                        return True
+                return False
+        except Exception:
+            return False
         
     def is_port_in_use(self, port: int) -> bool:
         """Check if a port is in use by checking network connections."""
@@ -241,7 +277,7 @@ class ComfyUIManager:
             if not install_path:
                 return models_info
             
-            # Common ComfyUI model directories
+            # Standard ComfyUI model directories
             model_dirs = [
                 "models",
                 "models/checkpoints",
@@ -261,7 +297,6 @@ class ComfyUIManager:
                 "models/segment_anything",
                 "models/ultralytics",
                 "models/rembg",
-                "models/background_removal",
                 "models/depth_anything",
                 "models/midas",
                 "models/lineart",
@@ -276,39 +311,7 @@ class ComfyUIManager:
                 "models/blur",
                 "models/inpaint",
                 "models/outpaint",
-                "models/refiner",
-                "models/style",
-                "models/pose",
-                "models/face",
-                "models/hand",
-                "models/body",
-                "models/clothing",
-                "models/accessories",
-                "models/backgrounds",
-                "models/environments",
-                "models/characters",
-                "models/objects",
-                "models/textures",
-                "models/materials",
-                "models/lighting",
-                "models/effects",
-                "models/filters",
-                "models/transitions",
-                "models/animations",
-                "models/videos",
-                "models/audio",
-                "models/data",
-                "models/configs",
-                "models/presets",
-                "models/templates",
-                "models/examples",
-                "models/samples",
-                "models/test",
-                "models/temp",
-                "models/cache",
-                "models/logs",
-                "models/backup",
-                "models/archive"
+                "models/refiner"
             ]
             
             # Check each model directory
@@ -326,121 +329,43 @@ class ComfyUIManager:
                                 "files": files[:5]  # First 5 files as examples
                             })
                             
-                            # Categorize by model type
-                            if "checkpoints" in model_dir.lower():
-                                models_info["model_types"]["Checkpoints"] = full_path
-                            elif "lora" in model_dir.lower():
-                                models_info["model_types"]["LoRAs"] = full_path
-                            elif "controlnet" in model_dir.lower():
-                                models_info["model_types"]["ControlNet"] = full_path
-                            elif "vae" in model_dir.lower():
-                                models_info["model_types"]["VAE"] = full_path
-                            elif "embeddings" in model_dir.lower():
-                                models_info["model_types"]["Embeddings"] = full_path
-                            elif "upscale" in model_dir.lower():
-                                models_info["model_types"]["Upscale"] = full_path
-                            elif "clip" in model_dir.lower():
-                                models_info["model_types"]["CLIP"] = full_path
-                            elif "ipadapter" in model_dir.lower():
-                                models_info["model_types"]["IP-Adapter"] = full_path
-                            elif "unet" in model_dir.lower():
-                                models_info["model_types"]["UNet"] = full_path
-                            elif "diffusers" in model_dir.lower():
-                                models_info["model_types"]["Diffusers"] = full_path
-                            elif "animediff" in model_dir.lower():
-                                models_info["model_types"]["AnimeDiff"] = full_path
-                            elif "svd" in model_dir.lower():
-                                models_info["model_types"]["SVD"] = full_path
-                            elif "instantid" in model_dir.lower():
-                                models_info["model_types"]["InstantID"] = full_path
-                            elif "face" in model_dir.lower():
-                                models_info["model_types"]["Face"] = full_path
-                            elif "pose" in model_dir.lower():
-                                models_info["model_types"]["Pose"] = full_path
-                            elif "depth" in model_dir.lower():
-                                models_info["model_types"]["Depth"] = full_path
-                            elif "normal" in model_dir.lower():
-                                models_info["model_types"]["Normal"] = full_path
-                            elif "segmentation" in model_dir.lower():
-                                models_info["model_types"]["Segmentation"] = full_path
-                            elif "sketch" in model_dir.lower():
-                                models_info["model_types"]["Sketch"] = full_path
-                            elif "canny" in model_dir.lower():
-                                models_info["model_types"]["Canny"] = full_path
-                            elif "lineart" in model_dir.lower():
-                                models_info["model_types"]["LineArt"] = full_path
-                            elif "softedge" in model_dir.lower():
-                                models_info["model_types"]["SoftEdge"] = full_path
-                            elif "openpose" in model_dir.lower():
-                                models_info["model_types"]["OpenPose"] = full_path
-                            elif "inpaint" in model_dir.lower():
-                                models_info["model_types"]["Inpaint"] = full_path
-                            elif "outpaint" in model_dir.lower():
-                                models_info["model_types"]["Outpaint"] = full_path
-                            elif "refiner" in model_dir.lower():
-                                models_info["model_types"]["Refiner"] = full_path
-                            elif "style" in model_dir.lower():
-                                models_info["model_types"]["Style"] = full_path
-                            elif "hand" in model_dir.lower():
-                                models_info["model_types"]["Hand"] = full_path
-                            elif "body" in model_dir.lower():
-                                models_info["model_types"]["Body"] = full_path
-                            elif "clothing" in model_dir.lower():
-                                models_info["model_types"]["Clothing"] = full_path
-                            elif "accessories" in model_dir.lower():
-                                models_info["model_types"]["Accessories"] = full_path
-                            elif "backgrounds" in model_dir.lower():
-                                models_info["model_types"]["Backgrounds"] = full_path
-                            elif "environments" in model_dir.lower():
-                                models_info["model_types"]["Environments"] = full_path
-                            elif "characters" in model_dir.lower():
-                                models_info["model_types"]["Characters"] = full_path
-                            elif "objects" in model_dir.lower():
-                                models_info["model_types"]["Objects"] = full_path
-                            elif "textures" in model_dir.lower():
-                                models_info["model_types"]["Textures"] = full_path
-                            elif "materials" in model_dir.lower():
-                                models_info["model_types"]["Materials"] = full_path
-                            elif "lighting" in model_dir.lower():
-                                models_info["model_types"]["Lighting"] = full_path
-                            elif "effects" in model_dir.lower():
-                                models_info["model_types"]["Effects"] = full_path
-                            elif "filters" in model_dir.lower():
-                                models_info["model_types"]["Filters"] = full_path
-                            elif "transitions" in model_dir.lower():
-                                models_info["model_types"]["Transitions"] = full_path
-                            elif "animations" in model_dir.lower():
-                                models_info["model_types"]["Animations"] = full_path
-                            elif "videos" in model_dir.lower():
-                                models_info["model_types"]["Videos"] = full_path
-                            elif "audio" in model_dir.lower():
-                                models_info["model_types"]["Audio"] = full_path
-                            elif "data" in model_dir.lower():
-                                models_info["model_types"]["Data"] = full_path
-                            elif "configs" in model_dir.lower():
-                                models_info["model_types"]["Configs"] = full_path
-                            elif "presets" in model_dir.lower():
-                                models_info["model_types"]["Presets"] = full_path
-                            elif "templates" in model_dir.lower():
-                                models_info["model_types"]["Templates"] = full_path
-                            elif "examples" in model_dir.lower():
-                                models_info["model_types"]["Examples"] = full_path
-                            elif "samples" in model_dir.lower():
-                                models_info["model_types"]["Samples"] = full_path
-                            elif "test" in model_dir.lower():
-                                models_info["model_types"]["Test"] = full_path
-                            elif "temp" in model_dir.lower():
-                                models_info["model_types"]["Temp"] = full_path
-                            elif "cache" in model_dir.lower():
-                                models_info["model_types"]["Cache"] = full_path
-                            elif "logs" in model_dir.lower():
-                                models_info["model_types"]["Logs"] = full_path
-                            elif "backup" in model_dir.lower():
-                                models_info["model_types"]["Backup"] = full_path
-                            elif "archive" in model_dir.lower():
-                                models_info["model_types"]["Archive"] = full_path
-                            else:
-                                models_info["model_types"]["Other"] = full_path
+                            # Categorize by model type using a mapping dictionary
+                            model_type_mapping = {
+                                "checkpoints": "Checkpoints",
+                                "lora": "LoRAs", 
+                                "controlnet": "ControlNet",
+                                "vae": "VAE",
+                                "embeddings": "Embeddings",
+                                "upscale": "Upscale",
+                                "clip": "CLIP",
+                                "ipadapter": "IP-Adapter",
+                                "unet": "UNet",
+                                "diffusers": "Diffusers",
+                                "animediff": "AnimeDiff",
+                                "svd": "SVD",
+                                "instantid": "InstantID",
+                                "face": "Face",
+                                "depth": "Depth",
+                                "normal": "Normal",
+                                "segmentation": "Segmentation",
+                                "sketch": "Sketch",
+                                "canny": "Canny",
+                                "lineart": "LineArt",
+                                "softedge": "SoftEdge",
+                                "openpose": "OpenPose",
+                                "inpaint": "Inpaint",
+                                "outpaint": "Outpaint",
+                                "refiner": "Refiner"
+                            }
+                            
+                            # Find matching model type
+                            model_type = "Other"
+                            for keyword, type_name in model_type_mapping.items():
+                                if keyword in model_dir.lower():
+                                    model_type = type_name
+                                    break
+                            
+                            models_info["model_types"][model_type] = full_path
                                 
                     except Exception as e:
                         logger.warning(f"Error reading model directory {full_path}: {e}")
@@ -471,23 +396,17 @@ class ComfyUIManager:
             # Check if ComfyUI is running based on process detection
             running = pid is not None
             
-            # Check port status
-            port_8188 = self.is_port_in_use(8188)
-            
-            # If we found a process but port 8188 is not in use, check other common ports
-            if running and not port_8188:
-                # Check other common ComfyUI ports
-                for port in [8189, 8190, 8080, 8000]:
-                    if self.is_port_in_use(port):
-                        logger.info(f"ComfyUI found running on port {port} instead of 8188")
-                        port_8188 = True
-                        break
+            # Check port status - extract port from base_url
+            detected_port = int(self.base_url.split(':')[-1])
+            port_in_use = self.is_port_in_use(detected_port)
             
             result = {
                 "installed": installed,
                 "running": running,
                 "pid": pid,
-                "port_8188": port_8188,
+                "port": detected_port,
+                "port_in_use": port_in_use,
+                "base_url": self.base_url,
                 "is_external": False
             }
             
@@ -740,7 +659,7 @@ class ComfyUIManager:
                     Write-Host "=== RENDERSYNC COMFYUI MODULE ===" -ForegroundColor Green
                     Write-Host "Starting ComfyUI with full functionality" -ForegroundColor Yellow
                     Write-Host "ComfyUI will run until this window is closed" -ForegroundColor Cyan
-                    Write-Host "Web interface: http://127.0.0.1:8000" -ForegroundColor Magenta
+                    Write-Host "Web interface: http://127.0.0.1:8188" -ForegroundColor Magenta
                     Write-Host "=================================" -ForegroundColor Green
                     Write-Host ""
                     

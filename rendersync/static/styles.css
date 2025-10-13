@@ -1,129 +1,203 @@
 /* ======================================================================================= */
+/* RENDERSYNC CORE STYLESHEET */
+/* ======================================================================================= */
+/* Visual design and layout for the rendersync application */
+
+/* ======================================================================================= */
+/* GLOBAL RESET AND BASE STYLES */
+/* ======================================================================================= */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+/* Full viewport height and width setup */
 html, body {
     height: 100%;
     width: 100%;
 }
 
+/* Main body styling with professional font stack and layout */
 body {
     font-family: 'Segoe UI', 'Aptos', 'SF Pro Display', 'Helvetica Neue', 'Arial', sans-serif;
-    background: hsl(0, 0%, 100%);
+    background: hsl(0, 0%, 100%);  /* Pure white background for maximum contrast */
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding-bottom: 40px;
+    padding-bottom: 40px;  /* Bottom padding to prevent content cutoff */
 }
 
+/* ======================================================================================= */
+/* MAIN LAYOUT CONTAINERS */
+/* ======================================================================================= */
 
-
-
+/* Primary container for all content - responsive width with margins */
 .container {
-    width: calc(100% - 4%);
+    width: calc(100% - 4%);  /* 4% total margin (2% on each side) */
     margin: 2% auto;
     border-radius: 10px;
     background-color: #ffffff;
     padding: 20px;
     box-sizing: border-box;
-    border: 2px solid #000000;
+    border: 2px solid #000000;  /* Strong black border for definition */
 }
 
+/* Header section with blue background and red border for branding */
 .header {
     text-align: left;
     padding: 20px;
-    background: hsl(229, 100%, 76%);
+    background: hsl(0, 0%, 100%);  /* Pure white background for maximum contrast */
     border-radius: 10px;
-    border: 2px solid #ff0000;
-
+    border: 2px solid #ff0000;  /* Red accent border */
 }
 
-
 /* ======================================================================================= */
-
+/* MODULE AND COMPONENT STYLES */
+/* ======================================================================================= */
+/* Main module containers with blue background and red border for visual hierarchy */
 .module {
     margin: 10px auto;
     padding: 20px;
-    background: hsl(229, 100%, 76%);
+    background: hsl(0, 0%, 100%);  /* Professional blue background */
     border-radius: 10px;
-    border: 2px solid #ff0000;
-
+    border: 2px solid #ff0000;  /* Red accent border for branding */
 }
 
+/* Module heading styling with consistent spacing */
 .module h2 {
     margin-top: 0;
-    color: #333;
+    color: #333;  /* Dark gray for good readability */
 }
 
-/* Shared button styling */
+/* ======================================================================================= */
+/* INTERACTIVE ELEMENTS */
+/* ======================================================================================= */
+/* Shared button styling with professional appearance and hover effects */
+
+
 button {
     font-family: 'Segoe UI', 'Aptos', 'SF Pro Display', 'Helvetica Neue', 'Arial', sans-serif;
-    border: none;
     padding: 10px;
     font-size: 14px;    
     border-radius: 4px;
-    background: #e9ecef;
-    transition: background-color;
+    background: #e9ecef;  /* Light gray background */
+    transition: background-color;  /* Smooth color transitions */
+    border: 1px solid #000000;
 }
 
+/* Button hover state for interactive feedback */
 button:hover {
-    background-color: #5a6268;
+    background-color: #5a6268;  /* Darker gray on hover */
 }
 
+/* Button disabled state for non-interactive elements */
 button:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
+    background: #6c757d;  /* Muted gray background */
+    cursor: not-allowed;  /* Indicate non-interactive state */
 }
 
-/* Module collapse button */
+/* Input field styling with black border */
+input[type="number"],
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="url"],
+input[type="tel"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"],
+input[type="color"],
+input[type="range"],
+input[type="file"],
+select,
+textarea {
+    border: 1px solid #000000;
+    border-radius: 4px;
+    padding: 8px;
+    font-family: 'Segoe UI', 'Aptos', 'SF Pro Display', 'Helvetica Neue', 'Arial', sans-serif;
+    font-size: 14px;
+    background-color: #ffffff;
+}
+
+/* Input focus state */
+input[type="number"]:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+input[type="url"]:focus,
+input[type="tel"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="datetime-local"]:focus,
+input[type="month"]:focus,
+input[type="week"]:focus,
+input[type="color"]:focus,
+input[type="range"]:focus,
+input[type="file"]:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border: 2px solid #000000;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+/* ======================================================================================= */
+/* SPECIALIZED UI COMPONENTS */
+/* ======================================================================================= */
+
+/* Module collapse button for expandable sections */
 .module-collapse-btn {
     font-size: 14px;
     padding: 0;
     margin-right: 8px;
-    width: 20px;
+    width: 20px;  /* Square button for consistent appearance */
     height: 20px;
-    background: white;
-    border: 1px solid #ccc;
-    display: inline-flex;
+    background: white;  /* Clean white background */
+    border: 1px solid #ccc;  /* Subtle border */
+    display: inline-flex;  /* Flexbox for perfect centering */
     align-items: center;
     justify-content: center;
+    border: 1px solid #000000;
 }
 
-
-
-
+/* ======================================================================================= */
+/* DATA DISPLAY COMPONENTS */
 /* ======================================================================================= */
 
-/* Status/info boxes */
+/* Status/info boxes for displaying system information */
 .status-box {
     margin-top: 15px;
     padding: 10px;
-    background: #e9ecef;
+    background: #e9ecef;  /* Light gray background for subtle contrast */
     border-radius: 4px;
     font-size: 14px;
 }
 
-/* System table */
+/* System information tables with professional styling */
 .system-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: collapse;  /* Clean table borders */
     margin-top: 15px;
-    border: 1px solid grey;
-    background-color: #e9ecef;
-    font-size: 12px;
-    border-radius: 4px;
+    border: 1px solid grey;  /* Consistent border styling */
+    background-color: #e9ecef;  /* Light background for readability */
+    font-family: 'Segoe UI', 'Aptos', 'SF Pro Display', 'Helvetica Neue', 'Arial', sans-serif;
+    font-size: 14px;
+    border-radius: 4px;  /* Rounded corners for modern appearance */
 }
 
+/* System table cell styling with proper spacing and text handling */
 .system-table th,
 .system-table td {
-    border: 1px solid grey;
-    padding: 2px;
-    font-weight: normal;
-    word-wrap: break-word;
-    max-width: 300px;
+    border: 1px solid grey;  /* Consistent cell borders */
+    padding: 2px;  /* Minimal padding for compact display */
+    font-weight: normal;  /* Regular font weight for readability */
+    word-wrap: break-word;  /* Handle long text gracefully */
+    max-width: 300px;  /* Prevent excessively wide columns */
 }
 
 /* Network table */
@@ -133,7 +207,8 @@ button:disabled {
     margin-top: 15px;
     border: 1px solid grey;
     background-color: #e9ecef;
-    font-size: 12px;
+    font-family: 'Segoe UI', 'Aptos', 'SF Pro Display', 'Helvetica Neue', 'Arial', sans-serif;
+    font-size: 14px;
     border-radius: 4px;
 }
 
@@ -219,9 +294,6 @@ button:disabled {
     text-decoration: underline;
 }
 
-/* ======================================================================================= */
-/* SUBMODULE STYLES */
-/* ======================================================================================= */
 
 .submodule {
     margin: 10px 0 10px 20px;
@@ -229,4 +301,105 @@ button:disabled {
     background: hsla(229, 100%, 50%, 0);
     border: 1px solid #000000;
     border-radius: 10px;
+}
+
+/* ======================================================================================= */
+/* MODAL STYLES */
+/* ======================================================================================= */
+
+/* Modal overlay */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Modal content */
+.modal-content {
+    background-color: #ffffff;
+    border: 2px solid #000000;
+    border-radius: 10px;
+    max-width: 80%;
+    max-height: 80%;
+    width: 600px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Modal header */
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #000000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f9f9f9;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 18px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.modal-close:hover {
+    background-color: #e9ecef;
+    color: #000;
+}
+
+/* Modal body */
+.modal-body {
+    padding: 20px;
+    max-height: 60vh;
+    overflow-y: auto;
+    font-family: 'Segoe UI', 'Aptos', 'SF Pro Display', 'Helvetica Neue', 'Arial', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Modal content styling */
+.modal-body h4 {
+    color: #333;
+    margin-top: 15px;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.modal-body ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.modal-body li {
+    margin: 4px 0;
+}
+
+.modal-body code {
+    background-color: #f5f5f5;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
 }

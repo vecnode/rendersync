@@ -3,6 +3,17 @@
 // ============================================================================
 
 // ============================================================================
+// PAGE INITIALIZATION
+// ============================================================================
+
+// Load workflows when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadWorkflows();
+});
+
+// ============================================================================
+
+// ============================================================================
 // SYSTEM INFORMATION FUNCTIONS
 // ============================================================================
 
@@ -244,7 +255,7 @@ async function loadTerminalInfo() {
             }).join('');
         }
     } catch (error) {
-        document.getElementById('terminal-info-rows').innerHTML = `<tr><td colspan="2" style="color: red;">Error loading terminal info: ${error.message}</td></tr>`;
+        document.getElementById('terminal-info-rows').innerHTML = `<tr><td colspan="2">Error loading terminal info: ${error.message}</td></tr>`;
     }
 }
 
@@ -451,7 +462,7 @@ async function inspectPID() {
             }
         }
     } catch (error) {
-        rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error inspecting PID: ${error.message}</td></tr>`;
+        rows.innerHTML = `<tr><td colspan="2">Error inspecting PID: ${error.message}</td></tr>`;
     } finally {
         button.disabled = false;
         button.textContent = 'Inspect PID';
@@ -603,14 +614,14 @@ async function inspectOllama() {
     
     button.disabled = true;
     button.textContent = 'Inspecting';
-    rows.innerHTML = '<tr><td colspan="2" style="color: blue;">Inspecting Ollama installation</td></tr>';
+    rows.innerHTML = '<tr><td colspan="2">Inspecting Ollama installation</td></tr>';
     
     try {
         const response = await fetch('/api/ollama-status');
         const data = await response.json();
         
         if (data.error) {
-            rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error: ${data.error}</td></tr>`;
+            rows.innerHTML = `<tr><td colspan="2">Error: ${data.error}</td></tr>`;
             return;
         }
         
@@ -666,7 +677,7 @@ async function inspectOllama() {
         }
         
     } catch (error) {
-        rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error inspecting Ollama: ${error.message}</td></tr>`;
+        rows.innerHTML = `<tr><td colspan="2">Error inspecting Ollama: ${error.message}</td></tr>`;
     } finally {
         button.disabled = false;
         button.textContent = 'Inspect ollama';
@@ -679,7 +690,7 @@ async function stopOllama() {
     
     button.disabled = true;
     button.textContent = 'Stopping';
-    rows.innerHTML = '<tr><td colspan="2" style="color: blue;">Stopping Ollama processes</td></tr>';
+    rows.innerHTML = '<tr><td colspan="2">Stopping Ollama processes</td></tr>';
     
     try {
         const response = await fetch('/api/ollama-stop', {
@@ -692,7 +703,7 @@ async function stopOllama() {
         const data = await response.json();
         
         if (data.error) {
-            rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error: ${data.error}</td></tr>`;
+            rows.innerHTML = `<tr><td colspan="2">Error: ${data.error}</td></tr>`;
             return;
         }
         
@@ -733,7 +744,7 @@ async function stopOllama() {
         }
         
     } catch (error) {
-        rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error stopping Ollama: ${error.message}</td></tr>`;
+        rows.innerHTML = `<tr><td colspan="2">Error stopping Ollama: ${error.message}</td></tr>`;
     } finally {
         button.disabled = false;
         button.textContent = 'Stop ollama';
@@ -746,7 +757,7 @@ async function startOllama() {
     
     button.disabled = true;
     button.textContent = 'Starting';
-    rows.innerHTML = '<tr><td colspan="2" style="color: blue;">Starting Ollama process</td></tr>';
+    rows.innerHTML = '<tr><td colspan="2">Starting Ollama process</td></tr>';
     
     try {
         const response = await fetch('/api/ollama-start', {
@@ -759,7 +770,7 @@ async function startOllama() {
         const data = await response.json();
         
         if (data.error) {
-            rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error: ${data.error}</td></tr>`;
+            rows.innerHTML = `<tr><td colspan="2">Error: ${data.error}</td></tr>`;
             return;
         }
         
@@ -803,7 +814,7 @@ async function startOllama() {
         }
         
     } catch (error) {
-        rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error starting Ollama: ${error.message}</td></tr>`;
+        rows.innerHTML = `<tr><td colspan="2">Error starting Ollama: ${error.message}</td></tr>`;
     } finally {
         button.disabled = false;
         button.textContent = 'Start ollama';
@@ -816,14 +827,14 @@ async function getOllamaModels() {
     
     button.disabled = true;
     button.textContent = 'Getting Models';
-    rows.innerHTML = '<tr><td colspan="2" style="color: blue;">Getting Ollama models</td></tr>';
+    rows.innerHTML = '<tr><td colspan="2">Getting Ollama models</td></tr>';
     
     try {
         const response = await fetch('/api/ollama-models');
         const data = await response.json();
         
         if (data.error) {
-            rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error: ${data.error}</td></tr>`;
+            rows.innerHTML = `<tr><td colspan="2">Error: ${data.error}</td></tr>`;
             return;
         }
         
@@ -874,7 +885,7 @@ async function getOllamaModels() {
         }
         
     } catch (error) {
-        rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error getting models: ${error.message}</td></tr>`;
+        rows.innerHTML = `<tr><td colspan="2">Error getting models: ${error.message}</td></tr>`;
     } finally {
         button.disabled = false;
         button.textContent = 'Get ollama Models';
@@ -1053,14 +1064,14 @@ async function inspectComfyUI() {
     
     button.disabled = true;
     button.textContent = 'Inspecting';
-    rows.innerHTML = '<tr><td colspan="2" style="color: blue;">Inspecting ComfyUI installation</td></tr>';
+    rows.innerHTML = '<tr><td colspan="2">Inspecting ComfyUI installation</td></tr>';
     
     try {
         const response = await fetch('/api/comfyui-status');
         const data = await response.json();
         
         if (data.error) {
-            rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error: ${data.error}</td></tr>`;
+            rows.innerHTML = `<tr><td colspan="2">Error: ${data.error}</td></tr>`;
             return;
         }
         
@@ -1102,10 +1113,11 @@ async function inspectComfyUI() {
         }
         
         // Port status
-        if (data.port_8188) {
-            rowData.push(['Port 8188', 'In use']);
+        if (data.port_in_use) {
+            rowData.push([`Port ${data.port}`, 'In use']);
+            rowData.push(['ComfyUI URL', data.base_url]);
         } else {
-            rowData.push(['Port 8188', 'Not in use']);
+            rowData.push([`Port ${data.port}`, 'Not in use']);
         }
         
         // ComfyUI folder path
@@ -1147,7 +1159,7 @@ async function inspectComfyUI() {
         }
         
     } catch (error) {
-        rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error inspecting ComfyUI: ${error.message}</td></tr>`;
+        rows.innerHTML = `<tr><td colspan="2">Error inspecting ComfyUI: ${error.message}</td></tr>`;
     } finally {
         button.disabled = false;
         button.textContent = 'Inspect comfyui';
@@ -1160,7 +1172,7 @@ async function stopComfyUI() {
     
     button.disabled = true;
     button.textContent = 'Stopping';
-    rows.innerHTML = '<tr><td colspan="2" style="color: blue;">Stopping ComfyUI processes</td></tr>';
+    rows.innerHTML = '<tr><td colspan="2">Stopping ComfyUI processes</td></tr>';
     
     try {
         const response = await fetch('/api/comfyui-stop', {
@@ -1173,7 +1185,7 @@ async function stopComfyUI() {
         const data = await response.json();
         
         if (data.error) {
-            rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error: ${data.error}</td></tr>`;
+            rows.innerHTML = `<tr><td colspan="2">Error: ${data.error}</td></tr>`;
             return;
         }
         
@@ -1214,10 +1226,10 @@ async function stopComfyUI() {
         }
         
     } catch (error) {
-        rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error stopping ComfyUI: ${error.message}</td></tr>`;
+        rows.innerHTML = `<tr><td colspan="2">Error stopping ComfyUI: ${error.message}</td></tr>`;
     } finally {
         button.disabled = false;
-        button.textContent = 'Stop comfyui';
+        button.textContent = 'Stop ALL ComfyUI';
     }
 }
 
@@ -1227,7 +1239,7 @@ async function startComfyUI() {
     
     button.disabled = true;
     button.textContent = 'Starting';
-    rows.innerHTML = '<tr><td colspan="2" style="color: blue;">Starting ComfyUI process</td></tr>';
+    rows.innerHTML = '<tr><td colspan="2">Starting ComfyUI process</td></tr>';
     
     try {
         const response = await fetch('/api/comfyui-start', {
@@ -1240,7 +1252,7 @@ async function startComfyUI() {
         const data = await response.json();
         
         if (data.error) {
-            rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error: ${data.error}</td></tr>`;
+            rows.innerHTML = `<tr><td colspan="2">Error: ${data.error}</td></tr>`;
             return;
         }
         
@@ -1284,28 +1296,167 @@ async function startComfyUI() {
         }
         
     } catch (error) {
-        rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error starting ComfyUI: ${error.message}</td></tr>`;
+        rows.innerHTML = `<tr><td colspan="2">Error starting ComfyUI: ${error.message}</td></tr>`;
     } finally {
         button.disabled = false;
-        button.textContent = 'Start comfyui';
+        button.textContent = 'Start ComfyUI';
     }
 }
 
 // ============================================================================
-// COMFYUI WORKFLOW SUBMISSION FUNCTIONS
+// WORKFLOW MANAGEMENT FUNCTIONS
+// ============================================================================
+
+async function loadWorkflows() {
+    try {
+        const response = await fetch('/api/workflows');
+        const data = await response.json();
+        
+        const workflowList = document.getElementById('workflow-list');
+        
+        if (data.success && data.workflows.length > 0) {
+            workflowList.innerHTML = data.workflows.map(workflow => `
+                <div style="padding: 8px; border: 1px solid black; border-radius: 4px; margin-bottom: 8px; background: #f9f9f9; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="color: #333;">${workflow.filename}</div>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="showWorkflowInfo('${workflow.filename}')" style="padding: 4px 8px; font-size: 12px; background: #e9ecef; border: 1px solid black; border-radius: 3px;">Info</button>
+                        <button onclick="selectWorkflow('${workflow.filename}')" style="padding: 4px 8px; font-size: 12px; background: #e9ecef; border: 1px solid black; border-radius: 3px;">Select</button>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            workflowList.innerHTML = '<div style="color: #888; font-size: 12px;">No workflows found</div>';
+        }
+    } catch (error) {
+        console.error('Failed to load workflows:', error);
+        document.getElementById('workflow-list').innerHTML = '<div style="color: red; font-size: 12px;">Failed to load workflows</div>';
+    }
+}
+
+function openWorkflowDialog() {
+    document.getElementById('workflow-file-input').click();
+}
+
+async function uploadWorkflow() {
+    const fileInput = document.getElementById('workflow-file-input');
+    const file = fileInput.files[0];
+    
+    if (!file) return;
+    
+    if (!file.name.endsWith('.json')) {
+        alert('Please select a JSON file');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+        const response = await fetch('/api/workflows/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Show green success message
+            const workflowList = document.getElementById('workflow-list');
+            const successDiv = document.createElement('div');
+            successDiv.style.color = '#155724'; // Dark green text
+            successDiv.style.fontSize = '12px';
+            successDiv.style.marginTop = '10px';
+            successDiv.style.padding = '8px';
+            successDiv.style.border = '1px solid #28a745';
+            successDiv.style.borderRadius = '4px';
+            successDiv.style.background = '#d4edda';
+            successDiv.textContent = `✅ Workflow '${data.filename}' uploaded successfully!`;
+            
+            // Remove any existing messages
+            const existingMessage = workflowList.querySelector('.upload-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            successDiv.className = 'upload-message';
+            workflowList.appendChild(successDiv);
+            
+            // Remove message after 3 seconds
+            setTimeout(() => {
+                if (successDiv.parentNode) {
+                    successDiv.remove();
+                }
+            }, 3000);
+            
+            loadWorkflows(); // Refresh the list
+        } else {
+            alert(`Upload failed: ${data.detail || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Upload error:', error);
+        alert('Upload failed: ' + error.message);
+    }
+    
+    // Clear the input
+    fileInput.value = '';
+}
+
+function selectWorkflow(filename) {
+    const workflowList = document.getElementById('workflow-list');
+    const buttons = workflowList.querySelectorAll('button');
+    
+    // Check if this workflow is already selected
+    const isCurrentlySelected = window.selectedWorkflow === filename;
+    
+    if (isCurrentlySelected) {
+        // Deselect - clear selection
+        window.selectedWorkflow = null;
+        buttons.forEach(btn => {
+            btn.textContent = 'Select';
+            btn.style.background = '#e9ecef';
+            btn.style.color = '#000';
+            btn.style.border = '1px solid #ccc';
+        });
+        console.log('Deselected workflow');
+    } else {
+        // Select this workflow - deselect all others first
+        window.selectedWorkflow = filename;
+        buttons.forEach(btn => {
+            btn.textContent = 'Select';
+            btn.style.background = '#e9ecef';
+            btn.style.color = '#000';
+            btn.style.border = '1px solid #ccc';
+        });
+        
+        // Highlight the selected one with green
+        event.target.textContent = 'Selected';
+        event.target.style.background = '#28a745'; // Green
+        event.target.style.color = 'white';
+        event.target.style.border = '1px solid #28a745';
+        
+        console.log(`Selected workflow: ${filename}`);
+    }
+}
+
 // ============================================================================
 
 async function submitWorkflow() {
     const button = document.getElementById('submit-workflow');
     const rows = document.getElementById('comfyui-action-rows');
     
+    // Check if a workflow is selected
+    if (!window.selectedWorkflow) {
+        alert('Please select a workflow first');
+        return;
+    }
+    
     button.disabled = true;
     button.textContent = 'Submitting';
-    rows.innerHTML = '<tr><td colspan="2" style="color: blue;">Submitting workflow to ComfyUI</td></tr>';
+    rows.innerHTML = '<tr><td colspan="2">Submitting workflow to ComfyUI</td></tr>';
     
     try {
-        // Load the default workflow from the workflows directory
-        const workflowPath = '/workflows/sd_text_to_image.json';
+        // Load selected workflow from file
+        const workflowPath = `/workflows/${window.selectedWorkflow}`;
         
         const response = await fetch(workflowPath);
         if (!response.ok) {
@@ -1314,21 +1465,13 @@ async function submitWorkflow() {
         
         const workflowData = await response.json();
         
-        // Debug logging
-        console.log('Loaded workflow data:', workflowData);
-        console.log('Workflow keys:', Object.keys(workflowData));
-        console.log('Nodes type:', typeof workflowData.nodes);
-        console.log('Nodes length:', Array.isArray(workflowData.nodes) ? workflowData.nodes.length : Object.keys(workflowData.nodes).length);
+        // Generate unique client ID and get seed (deterministic or random)
+        const uniqueClientId = `rendersync_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
-        if (Array.isArray(workflowData.nodes)) {
-            workflowData.nodes.forEach((node, i) => {
-                console.log(`Node ${i}: id=${node.id}, type=${node.type}`);
-            });
-        } else if (workflowData.nodes && typeof workflowData.nodes === 'object') {
-            Object.entries(workflowData.nodes).forEach(([id, node]) => {
-                console.log(`Node ${id}: class_type=${node.class_type}`);
-            });
-        }
+        // Get seed from input or generate random
+        const seedInput = document.getElementById('seed-input');
+        const inputSeed = seedInput.value.trim();
+        const randomSeed = inputSeed ? parseInt(inputSeed) : Math.floor(Math.random() * 1000000000000000);
         
         // Submit the workflow to ComfyUI
         const submitResponse = await fetch('/api/comfyui-submit-workflow', {
@@ -1337,8 +1480,9 @@ async function submitWorkflow() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                workflow: workflowData
-                // No base_url specified - will auto-detect ComfyUI port
+                workflow: workflowData,
+                client_id: uniqueClientId,
+                random_seed: randomSeed
             })
         });
         
@@ -1349,6 +1493,8 @@ async function submitWorkflow() {
         if (result.success) {
             rowData.push(['Output', 'Workflow submitted successfully']);
             rowData.push(['Prompt ID', result.prompt_id]);
+            rowData.push(['Client ID', uniqueClientId]);
+            rowData.push(['Seed', `${randomSeed} ${inputSeed ? '(deterministic)' : '(random)'}`]);
             rowData.push(['Status', 'Queued for execution']);
             rowData.push(['ComfyUI URL', '<a href="http://127.0.0.1:8188" target="_blank">http://127.0.0.1:8188</a>']);
         } else {
@@ -1367,7 +1513,7 @@ async function submitWorkflow() {
         }
         
     } catch (error) {
-        rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error submitting workflow: ${error.message}</td></tr>`;
+        rows.innerHTML = `<tr><td colspan="2">Error submitting workflow: ${error.message}</td></tr>`;
     } finally {
         button.disabled = false;
         button.textContent = 'Submit Workflow';
@@ -1375,84 +1521,133 @@ async function submitWorkflow() {
 }
 
 // ============================================================================
-// COMFYUI WORKFLOW SUBMISSION
+// WORKFLOW INFO MODAL FUNCTIONS
 // ============================================================================
 
-async function submitWorkflow() {
-    const button = document.getElementById('submit-workflow');
-    const rows = document.getElementById('comfyui-action-rows');
-    
-    button.disabled = true;
-    button.textContent = 'Submitting';
-    rows.innerHTML = '<tr><td colspan="2" style="color: blue;">Submitting workflow to ComfyUI</td></tr>';
-    
+async function showWorkflowInfo(filename) {
     try {
-        const workflowPath = '/workflows/sd_text_to_image.json'; // Using original workflow
+        // Show loading state
+        const modal = document.getElementById('workflow-info-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
         
-        const response = await fetch(workflowPath);
+        modalTitle.textContent = `Workflow Information: ${filename}`;
+        modalBody.innerHTML = '<div style="text-align: center; padding: 20px;">Loading workflow information...</div>';
+        modal.style.display = 'flex';
+        
+        // Fetch workflow data
+        const response = await fetch(`/workflows/${filename}`);
         if (!response.ok) {
-            throw new Error(`Failed to load workflow file: ${response.status}`);
+            throw new Error(`Failed to load workflow: ${response.status}`);
         }
         
         const workflowData = await response.json();
         
-        // Debug logging
-        console.log('Loaded workflow data:', workflowData);
-        console.log('Workflow keys:', Object.keys(workflowData));
-        console.log('Nodes type:', typeof workflowData.nodes);
-        console.log('Nodes length:', Array.isArray(workflowData.nodes) ? workflowData.nodes.length : Object.keys(workflowData.nodes).length);
+        // Extract and format workflow information
+        const info = extractWorkflowInfo(workflowData);
         
-        if (Array.isArray(workflowData.nodes)) {
-            workflowData.nodes.forEach((node, i) => {
-                console.log(`Node ${i}: id=${node.id}, type=${node.type}`);
-            });
-        } else if (workflowData.nodes && typeof workflowData.nodes === 'object') {
-            Object.entries(workflowData.nodes).forEach(([id, node]) => {
-                console.log(`Node ${id}: class_type=${node.class_type}`);
-            });
-        }
-        
-        const submitResponse = await fetch('/api/comfyui-submit-workflow', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                workflow: workflowData
-                // No base_url specified - will auto-detect ComfyUI port
-            })
-        });
-        
-        const result = await submitResponse.json();
-        
-        const rowData = [];
-        
-        if (result.success) {
-            rowData.push(['Output', 'Workflow submitted successfully']);
-            rowData.push(['Prompt ID', result.prompt_id]);
-            rowData.push(['Status', 'Queued for execution']);
-            rowData.push(['ComfyUI URL', '<a href="http://127.0.0.1:8188" target="_blank">http://127.0.0.1:8188</a>']);
-        } else {
-            rowData.push(['Output', 'Failed to submit workflow']);
-            rowData.push(['Error', result.error]);
-            if (result.connection_error) {
-                rowData.push(['Note', 'Make sure ComfyUI is running on port 8188']);
-            }
-        }
-        
-        if (rowData.length === 0) {
-            rows.innerHTML = '<tr><td colspan="2">No submission data available</td></tr>';
-        } else {
-            rows.innerHTML = rowData.map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td></tr>`).join('');
-        }
+        // Display the information
+        modalBody.innerHTML = formatWorkflowInfo(info);
         
     } catch (error) {
-        rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error submitting workflow: ${error.message}</td></tr>`;
-    } finally {
-        button.disabled = false;
-        button.textContent = 'Submit Workflow';
+        console.error('Failed to load workflow info:', error);
+        const modalBody = document.getElementById('modal-body');
+        modalBody.innerHTML = `<div style="color: red; padding: 20px;">Error loading workflow information: ${error.message}</div>`;
     }
 }
+
+function extractWorkflowInfo(workflowData) {
+    const info = {
+        filename: 'Unknown',
+        nodes: [],
+        models: [],
+        general: {}
+    };
+    
+    // Extract general information
+    if (workflowData.id) info.general.id = workflowData.id;
+    if (workflowData.version) info.general.version = workflowData.version;
+    if (workflowData.last_node_id) info.general.lastNodeId = workflowData.last_node_id;
+    if (workflowData.last_link_id) info.general.lastLinkId = workflowData.last_link_id;
+    
+    // Extract node information
+    if (workflowData.nodes && Array.isArray(workflowData.nodes)) {
+        info.nodes = workflowData.nodes.map(node => ({
+            id: node.id,
+            type: node.type,
+            name: node.properties?.['Node name for S&R'] || node.type,
+            inputs: node.inputs?.length || 0,
+            outputs: node.outputs?.length || 0,
+            widgets: node.widgets_values || []
+        }));
+    }
+    
+    // Extract model information
+    if (workflowData.nodes && Array.isArray(workflowData.nodes)) {
+        workflowData.nodes.forEach(node => {
+            if (node.type === 'CheckpointLoaderSimple' && node.properties?.models) {
+                node.properties.models.forEach(model => {
+                    info.models.push({
+                        name: model.name,
+                        url: model.url,
+                        directory: model.directory
+                    });
+                });
+            }
+        });
+    }
+    
+    return info;
+}
+
+function formatWorkflowInfo(info) {
+    let html = '<div>';
+    
+    // General Information
+    html += '<h4>General Information</h4>';
+    html += '<ul>';
+    if (info.general.id) html += `<li><strong>ID:</strong> <code>${info.general.id}</code></li>`;
+    if (info.general.version) html += `<li><strong>Version:</strong> ${info.general.version}</li>`;
+    if (info.general.lastNodeId) html += `<li><strong>Last Node ID:</strong> ${info.general.lastNodeId}</li>`;
+    if (info.general.lastLinkId) html += `<li><strong>Last Link ID:</strong> ${info.general.lastLinkId}</li>`;
+    html += '</ul>';
+    
+    // Models
+    if (info.models.length > 0) {
+        html += '<h4>Models</h4>';
+        html += '<ul>';
+        info.models.forEach(model => {
+            html += `<li><strong>${model.name}</strong>`;
+            if (model.directory) html += ` (${model.directory})`;
+            html += '</li>';
+        });
+        html += '</ul>';
+    }
+    
+    // Nodes
+    if (info.nodes.length > 0) {
+        html += '<h4>Nodes</h4>';
+        html += '<ul>';
+        info.nodes.forEach(node => {
+            html += `<li><strong>${node.name}</strong> (ID: ${node.id})`;
+            html += `<br><small>Type: <code>${node.type}</code> | Inputs: ${node.inputs} | Outputs: ${node.outputs}</small>`;
+            if (node.widgets && node.widgets.length > 0) {
+                html += `<br><small>Widgets: ${node.widgets.join(', ')}</small>`;
+            }
+            html += '</li>';
+        });
+        html += '</ul>';
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+function closeWorkflowInfo() {
+    const modal = document.getElementById('workflow-info-modal');
+    modal.style.display = 'none';
+}
+
 
 // ============================================================================
 // END OF RENDERSYNC CORE JAVASCRIPT

@@ -1,106 +1,83 @@
 # ============================================================================
-# RENDERSYNC SERVER
+# RENDERSYNC CORE SERVER
 # ============================================================================
+# Main FastAPI application for render farm management and AI integration
 
-import subprocess
-import sys
-import os
-import socket
-import psutil
+# ============================================================================
+# CORE IMPORTS
+# ============================================================================
+# Standard library imports for system operations
+import subprocess  
+import sys         
+import os          
+import socket      
+import psutil      
+import json        
 
+# FastAPI framework imports for web API functionality
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+# ============================================================================
+# MODULE IMPORTS
+# ============================================================================
+# System monitoring and diagnostics modules
 from .modules.system import get_system_info_data, inspect_pid_data, ping_ip_data, ping_multiple_ips_data
 from .modules.network import get_network_info_data
 from .modules.interaction import inspect_port
+
+# Utility modules for process management and system operations
 from .modules.utilities import track_spawned_process, check_application_timeout, cleanup_processes, get_application_status, get_terminal_info, get_apps_running_info
+
+# AI service integration modules
 from .modules.ollama import OllamaManager, OllamaClient
 from .modules.comfyui import ComfyUIManager
 from .comfy_api import ComfyUIClient, load_workflow_from_file
 
 
 # ================================================================================
-# RENDERSYNC API ENDPOINTS
+# RENDERSYNC API ENDPOINTS DOCUMENTATION
 # ================================================================================
-# Core System Endpoints
-# --------------------------------------------------------------------------------
-# GET    /health                     Health check and system status
-# GET    /                           Serve main interface
-# GET    /static/*                   Static assets (js, css, images)
-#
-# System Information & Diagnostics 
-# --------------------------------------------------------------------------------
-# GET    /api/system-info            Full system specifications and capabilities
-# GET    /api/network-info           Network interfaces, IPs and connectivity data
-# GET    /api/apps-running-info      Running processes and resource utilization
-# GET    /api/terminal-info          Active terminal sessions and shell info
-#
-# Process & Port Management
-# --------------------------------------------------------------------------------
-# POST   /api/inspect-port           Analyze port status and bound processes
-# POST   /api/inspect-pid            Process details and resource consumption
-# POST   /api/ping                   Network connectivity test to single target
-# POST   /api/ping-multiple          Parallel connectivity testing to multiple targets
-#
-# Ollama Integration 
-# --------------------------------------------------------------------------------
-# POST   /api/ollama-start           Launch Ollama service (Windows)
-# GET    /api/ollama-models          List available language models
-# POST   /api/ollama-chat            Send message to active Ollama model
-#
-# ComfyUI Integration
-# --------------------------------------------------------------------------------
-# GET    /api/comfyui-status         ComfyUI installation and runtime status
-# POST   /api/comfyui-stop           Terminate ComfyUI processes
-# POST   /api/comfyui-start          Launch ComfyUI service (Windows)
-# POST   /api/comfyui-submit-workflow Submit workflow to ComfyUI
-# GET    /api/comfyui-queue          Get ComfyUI queue status
-# GET    /api/comfyui-history/{prompt_id} Get workflow execution history
-# POST   /api/comfyui-interrupt      Interrupt current ComfyUI execution
-# GET    /api/comfyui-system-stats   Get ComfyUI system statistics
-# GET    /workflows/{filename}       Serve workflow JSON files
-#
-# ================================================================================
+# Complete API endpoint reference organized by functionality
 
 
 
 
 # ============================================================================
-# PYDANTIC MODELS
+# PYDANTIC DATA MODELS
 # ============================================================================
+# Request validation models for API endpoints
 
 class PortInspectionRequest(BaseModel):
-    port: int
+    port: int  # Port number to inspect
 
 class PIDInspectionRequest(BaseModel):
-    pid: str
+    pid: str  # Process ID to inspect
 
 class PingRequest(BaseModel):
-    target: str
-    port: int = None
-    timeout: int = 3
+    target: str      # Target IP address or hostname
+    port: int = None  # Optional port for TCP ping
+    timeout: int = 3  # Timeout in seconds
 
 class MultiPingRequest(BaseModel):
-    targets: list
-    port: int = None
-    timeout: int = 2
+    targets: list    # List of target IPs/hostnames
+    port: int = None  # Optional port for TCP ping
+    timeout: int = 2  # Timeout in seconds
 
 
 # ============================================================================
-# PORT MANAGEMENT SYSTEM FOR RENDER FARMS
+# PROFESSIONAL PORT MANAGEMENT SYSTEM FOR RENDER FARMS
 # ============================================================================
 
-# Optimal ports for render farms and professional installations
 RENDER_FARM_PORTS = [
-    8080,   # Standard HTTP alternative (most common in render farms)
+    8080,   # Standard HTTP alternative
     8000,   # Development standard
     8081,   # Common render farm port
     8082,   # Secondary render service
-    3000,   # Node.js standard (many render tools use this)
+    3000,   # Node.js standard
     5000,   # Flask standard
     9000,   # Common render farm port
     8888,   # Jupyter/development standard
@@ -128,7 +105,7 @@ def find_available_port(start_port=None):
             print(f"\033[92mPORTMANAGER\033[0m Selected port {port} for render farm operations")
             return port
     
-    # Fallback: find any available port
+    # Fallback: find any available port in the professional range
     for port in range(8000, 9000):
         if is_port_available(port):
             print(f"\033[92mPORTMANAGER\033[0m Fallback: Using port {port}")
@@ -141,7 +118,7 @@ def is_port_available(port):
     """Check if a port is available for binding."""
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(1)
+            s.settimeout(1)  # 1 second timeout for quick checking
             result = s.bind(('', port))
             return True
     except (OSError, socket.error):
@@ -256,6 +233,7 @@ if os.path.exists(static_dir):
 
 @app.on_event("startup")
 async def _startup() -> None:
+    # Server startup: secures port, checks timeout, initializes render farm operations
     print("rendersync server starting")
     
     # Secure port for render farm operations
@@ -273,11 +251,13 @@ async def _startup() -> None:
 
 @app.on_event("shutdown")
 async def _shutdown() -> None:
+    # Server shutdown: cleans up processes, terminates gracefully
     print("rendersync server shutting down")
     cleanup_processes()
 
 @app.get("/")
 async def root():
+    # Main page: serves index.html from static directory, fallback to API info
     """Serve the main HTML page."""
     static_dir = os.path.join(os.path.dirname(__file__), "static")
     html_path = os.path.join(static_dir, "index.html")
@@ -287,26 +267,31 @@ async def root():
 
 @app.get("/favicon.ico")
 async def favicon():
+    # Favicon: returns empty response to prevent 404 errors
     """Serve favicon to prevent 404 errors."""
     return Response(content="", media_type="image/x-icon")
 
 @app.get("/.well-known/appspecific/com.chrome.devtools.json")
 async def chrome_devtools():
+    # Chrome DevTools: returns metadata for Chrome developer tools integration
     """Handle Chrome DevTools metadata request."""
     return {"version": "1.0", "name": "rendersync"}
 
 @app.get("/api/system-info")
 async def system_info():
+    # System info: no input, returns complete system specifications and hardware data
     """Get system information."""
     return get_system_info_data()
 
 @app.get("/api/network-info")
 async def network_info():
+    # Network info: no input, returns network interfaces, IPs and connectivity data
     """Get network information."""
     return get_network_info_data()
 
 @app.get("/api/terminal-info")
 async def terminal_info():
+    # Terminal info: no input, returns active terminal sessions and shell information
     """Get terminal information."""
     return get_terminal_info()
 
@@ -316,24 +301,28 @@ async def terminal_info():
 
 @app.get("/health")
 async def health():
+    # Health check: no input, returns simple status confirmation
     """Simple health check endpoint."""
     return {"status": "ok", "service": "rendersync"}
 
 
 @app.get("/api/process-status")
 async def process_status():
+    # Process status: no input, returns process management status and tracked processes
     """Get process management status."""
     return get_application_status()
 
 
 @app.get("/api/port-info")
 async def port_info():
+    # Port info: no input, returns port management information and availability
     """Get port management information."""
     return get_port_info()
 
 
 @app.post("/api/inspect-port")
 async def inspect_port_endpoint(request: PortInspectionRequest):
+    # Port inspection: takes port number, returns detailed port status and bound processes
     """Inspect a specific port and return detailed information."""
     try:
         result = inspect_port(request.port)
@@ -344,6 +333,7 @@ async def inspect_port_endpoint(request: PortInspectionRequest):
 
 @app.post("/api/inspect-pid")
 async def inspect_pid_endpoint(request: PIDInspectionRequest):
+    # PID inspection: takes process ID, returns detailed process information and resource usage
     """Inspect a specific PID and return detailed process information."""
     try:
         result = inspect_pid_data(request.pid)
@@ -354,6 +344,7 @@ async def inspect_pid_endpoint(request: PIDInspectionRequest):
 
 @app.post("/api/ping-ip")
 async def ping_ip_endpoint(request: PingRequest):
+    # Single ping: takes target IP/hostname and optional port, returns connectivity test results
     """Ping an IP address or hostname and optionally check a specific port."""
     try:
         result = ping_ip_data(request.target, request.port, request.timeout)
@@ -364,6 +355,7 @@ async def ping_ip_endpoint(request: PingRequest):
 
 @app.post("/api/ping-multiple")
 async def ping_multiple_endpoint(request: MultiPingRequest):
+    # Multi ping: takes list of targets and optional port, returns parallel connectivity test results
     """Ping multiple IPs sequentially for network scanning."""
     try:
         result = ping_multiple_ips_data(request.targets, request.port, request.timeout)
@@ -374,6 +366,7 @@ async def ping_multiple_endpoint(request: MultiPingRequest):
 
 @app.get("/api/ollama-status")
 async def ollama_status():
+    # Ollama status: no input, returns installation status, version, running state and API health
     """Get Ollama installation and running status."""
     try:
         import shutil
@@ -430,6 +423,7 @@ async def ollama_status():
 
 @app.post("/api/ollama-stop")
 async def ollama_stop():
+    # Ollama stop: no input, terminates all Ollama processes and returns termination results
     """Stop all Ollama processes running on the system."""
     try:
         manager = OllamaManager()
@@ -442,6 +436,7 @@ async def ollama_stop():
 
 @app.post("/api/ollama-start")
 async def ollama_start():
+    # Ollama start: no input, launches Ollama service on Windows and returns startup results
     """Start Ollama on Windows 10/11 as if double-clicked by user."""
     try:
         manager = OllamaManager()
@@ -454,6 +449,7 @@ async def ollama_start():
 
 @app.get("/api/ollama-models")
 async def ollama_models():
+    # Ollama models: no input, returns list of available language models and their status
     """Get available Ollama models."""
     try:
         manager = OllamaManager()
@@ -466,6 +462,7 @@ async def ollama_models():
 
 @app.post("/api/ollama-chat")
 async def ollama_chat(request: dict):
+    # Ollama chat: takes message text, sends to Ollama API and returns AI response
     """Send a chat message to Ollama."""
     try:
         message = request.get("message", "").strip()
@@ -482,6 +479,7 @@ async def ollama_chat(request: dict):
 
 @app.get("/api/comfyui-status")
 async def comfyui_status():
+    # ComfyUI status: no input, returns installation status, running state and port information
     """Get ComfyUI installation and running status."""
     try:
         manager = ComfyUIManager()
@@ -494,6 +492,7 @@ async def comfyui_status():
 
 @app.post("/api/comfyui-stop")
 async def comfyui_stop():
+    # ComfyUI stop: no input, terminates all ComfyUI processes and returns termination results
     """Stop all ComfyUI processes running on the system."""
     try:
         manager = ComfyUIManager()
@@ -501,11 +500,12 @@ async def comfyui_stop():
         return result
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to stop ComfyUI processes: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to stop all ComfyUI processes: {str(e)}")
 
 
 @app.post("/api/comfyui-start")
 async def comfyui_start():
+    # ComfyUI start: no input, launches ComfyUI service on Windows and returns startup results
     """Start ComfyUI on Windows."""
     try:
         manager = ComfyUIManager()
@@ -518,6 +518,7 @@ async def comfyui_start():
 
 @app.get("/api/apps-running-info")
 async def apps_running_info():
+    # Apps info: no input, returns running processes and resource utilization (Task Manager style)
     """Get information about running applications similar to Task Manager."""
     try:
         result = get_apps_running_info()
@@ -529,16 +530,19 @@ async def apps_running_info():
 
 @app.post("/api/comfyui-submit-workflow")
 async def comfyui_submit_workflow(request: dict):
+    # Workflow submit: takes workflow data, client_id and seed, submits to ComfyUI and returns execution results
     """Submit a workflow to ComfyUI for execution."""
     try:
         workflow_data = request.get("workflow")
         base_url = request.get("base_url")  # None means auto-detect
+        client_id = request.get("client_id")  # Custom client ID
+        random_seed = request.get("random_seed")  # Random seed for variation
         
         if not workflow_data:
             raise HTTPException(status_code=400, detail="Workflow data is required")
         
-        client = ComfyUIClient(base_url)
-        result = await client.submit_workflow(workflow_data)
+        client = ComfyUIClient(base_url, client_id)
+        result = await client.submit_workflow(workflow_data, random_seed)
         return result
         
     except Exception as e:
@@ -547,6 +551,7 @@ async def comfyui_submit_workflow(request: dict):
 
 @app.get("/api/comfyui-queue")
 async def comfyui_queue(request: Request):
+    # ComfyUI queue: takes optional base_url query param, returns queue status and pending jobs
     """Get ComfyUI queue status."""
     try:
         base_url = request.query_params.get("base_url")  # None means auto-detect
@@ -560,6 +565,7 @@ async def comfyui_queue(request: Request):
 
 @app.get("/api/comfyui-history/{prompt_id}")
 async def comfyui_history(prompt_id: str, request: Request):
+    # ComfyUI history: takes prompt_id from URL path and optional base_url query, returns workflow execution history
     """Get workflow execution history."""
     try:
         base_url = request.query_params.get("base_url")  # None means auto-detect
@@ -572,20 +578,109 @@ async def comfyui_history(prompt_id: str, request: Request):
 
 
 
+@app.get("/api/workflows")
+async def list_workflows():
+    # Workflow list: no input, returns list of available workflow JSON files
+    """List all available workflow files."""
+    try:
+        workflows_dir = os.path.join(os.path.dirname(__file__), "workflows")
+        workflows = []
+        
+        if os.path.exists(workflows_dir):
+            for filename in os.listdir(workflows_dir):
+                if filename.endswith('.json'):
+                    file_path = os.path.join(workflows_dir, filename)
+                    file_size = os.path.getsize(file_path)
+                    workflows.append({
+                        'filename': filename,
+                        'size': file_size,
+                        'path': f"/workflows/{filename}"
+                    })
+        
+        return {
+            "success": True,
+            "workflows": workflows,
+            "count": len(workflows)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list workflows: {str(e)}")
+
 @app.get("/workflows/{filename}")
-async def serve_workflow(filename: str):
-    """Serve workflow JSON files."""
-    workflows_dir = os.path.join(os.path.dirname(__file__), "workflows")
-    file_path = os.path.join(workflows_dir, filename)
-    
-    if os.path.exists(file_path) and filename.endswith('.json'):
-        return FileResponse(file_path, media_type="application/json")
-    else:
-        raise HTTPException(status_code=404, detail="Workflow file not found")
+async def get_workflow(filename: str):
+    # Workflow file: takes filename, returns workflow JSON content
+    """Get a specific workflow file."""
+    try:
+        workflows_dir = os.path.join(os.path.dirname(__file__), "workflows")
+        file_path = os.path.join(workflows_dir, filename)
+        
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail=f"Workflow file '{filename}' not found")
+        
+        if not filename.endswith('.json'):
+            raise HTTPException(status_code=400, detail="Only JSON files are allowed")
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Parse and return as JSON
+        workflow_data = json.loads(content)
+        return workflow_data
+        
+    except HTTPException:
+        raise
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON file")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load workflow: {str(e)}")
+
+@app.post("/api/workflows/upload")
+async def upload_workflow(request: Request):
+    # Workflow upload: takes multipart file upload, saves JSON workflow to workflows directory
+    """Upload a new workflow JSON file."""
+    try:
+        form = await request.form()
+        file = form.get("file")
+        
+        if not file:
+            raise HTTPException(status_code=400, detail="No file provided")
+        
+        if not file.filename.endswith('.json'):
+            raise HTTPException(status_code=400, detail="Only JSON files are allowed")
+        
+        # Read file content
+        content = await file.read()
+        
+        # Validate JSON
+        try:
+            json.loads(content.decode('utf-8'))
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Invalid JSON file")
+        
+        # Save to workflows directory
+        workflows_dir = os.path.join(os.path.dirname(__file__), "workflows")
+        os.makedirs(workflows_dir, exist_ok=True)
+        
+        file_path = os.path.join(workflows_dir, file.filename)
+        with open(file_path, 'wb') as f:
+            f.write(content)
+        
+        return {
+            "success": True,
+            "message": f"Workflow '{file.filename}' uploaded successfully",
+            "filename": file.filename,
+            "size": len(content)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload workflow: {str(e)}")
 
 
 @app.post("/api/comfyui-interrupt")
 async def comfyui_interrupt(request: dict):
+    # ComfyUI interrupt: takes optional base_url, interrupts current execution and returns interrupt results
     """Interrupt current ComfyUI execution."""
     try:
         base_url = request.get("base_url")  # None means auto-detect
@@ -599,6 +694,7 @@ async def comfyui_interrupt(request: dict):
 
 @app.get("/api/comfyui-system-stats")
 async def comfyui_system_stats(request: Request):
+    # ComfyUI stats: takes optional base_url query param, returns system statistics and performance metrics
     """Get ComfyUI system statistics."""
     try:
         base_url = request.query_params.get("base_url")  # None means auto-detect

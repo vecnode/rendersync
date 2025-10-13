@@ -70,7 +70,7 @@
             <p><button onclick="toggleModule('interaction-module')" class="module-collapse-btn">-</button>(interaction module)</p>
             <div id="interaction-module">
             <br>
-            <input type="number" id="port-input" placeholder="(1-65535)" min="1" max="65535" style="padding: 10px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; ">
+            <input type="number" id="port-input" placeholder="(1-65535)" min="1" max="65535"">
             <button id="inspect-port" onclick="inspectPort()">Inspect Port</button>
             <table class="system-table">
                 <thead>
@@ -83,7 +83,7 @@
                 </tbody>
             </table>
             <br>
-            <input type="text" id="pid-input" placeholder="Enter PID number" style="padding: 10px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; ">
+            <input type="text" id="pid-input" placeholder="Enter PID number">
             <button id="inspect-pid" onclick="inspectPID()">Inspect PID</button>
             <table class="system-table">
                 <thead>
@@ -96,8 +96,8 @@
                 </tbody>
             </table>
             <br>
-            <input type="text" id="ping-input" placeholder="IP address or hostname" style="padding: 10px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; width: 200px; ">
-            <input type="number" id="ping-port-input" placeholder="Port (optional)" min="1" max="65535" style="padding: 10px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; width: 120px; ">
+            <input type="text" id="ping-input" placeholder="IP address or hostname" style="width: 200px;">
+            <input type="number" id="ping-port-input" placeholder="Port (optional)" min="1" max="65535" style="width: 120px;">
             <button id="ping-ip" onclick="pingIP()">Ping IP</button>
             <table class="system-table">
                 <thead>
@@ -151,8 +151,8 @@
                     </table>
 
                     <br>
-                    <input type="text" id="ollama-query-input" placeholder="Enter your question for Ollama" style="padding: 10px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; width: 300px;">
-                    <select id="ollama-model-select" style="padding: 10px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
+                    <input type="text" id="ollama-query-input" placeholder="Enter your question for Ollama" style="width: 300px;">
+                    <select id="ollama-model-select" style="margin-right: 10px; width: 200px;">
                         <option value="">Select Model</option>
                     </select>
                     <button id="query-ollama" onclick="queryOllama()">Query ollama</button>
@@ -168,7 +168,7 @@
                     <p><button onclick="toggleModule('comfyui-submodule')" class="module-collapse-btn">-</button>(submodule comfyui)</p>
                     <div id="comfyui-submodule">
                     <br>
-                    <button id="inspect-comfyui" onclick="inspectComfyUI()">Inspect comfyui</button>
+                    <button id="inspect-comfyui" onclick="inspectComfyUI()">Inspect ComfyUI</button>
                     <table class="system-table">
                         <thead>
                             <tr>
@@ -182,9 +182,16 @@
 
                     <br>
 
-                    <button id="start-comfyui" onclick="startComfyUI()">Start comfyui</button>
-                    <button id="stop-comfyui" onclick="stopComfyUI()">Stop comfyui</button>
-                    <button id="submit-workflow" onclick="submitWorkflow()">Submit Workflow</button>
+                    <button id="start-comfyui" onclick="startComfyUI()">Start ComfyUI</button>
+                    <button id="stop-comfyui" onclick="stopComfyUI()">Stop ALL ComfyUI</button>
+                    
+
+                    
+
+                    <button id="inspect-comfyui" onclick="inspectComfyUI()">Inspect ComfyUI</button>
+                    <br><br>
+
+                    (submit ComfyUI renders) <br>
 
                     <table class="system-table">
                         <thead>
@@ -196,6 +203,32 @@
                         <tbody id="comfyui-action-rows">
                         </tbody>
                     </table>
+
+                    <br>
+
+                    <div class="submodule">
+                        
+
+                        (text-to-image, Stable Diffusion v1.5, SD 1.5) <br><br>
+
+                        <div id="workflow-list" style="margin-bottom: 15px;">
+                            <div style="color: #888; font-size: 12px;">Loading workflows</div>
+                        </div>
+
+                        
+                        
+                        <button id="open-workflow-btn" onclick="openWorkflowDialog()" style="margin-bottom: 15px;">Upload Workflow</button>
+                        <input type="file" id="workflow-file-input" accept=".json" style="display: none;" onchange="uploadWorkflow()">
+                        <br>
+                        <input type="number" id="seed-input" placeholder="Enter seed" min="0" max="999999999999999" style="width: 250px;">
+                        <button id="submit-workflow" onclick="submitWorkflow()">Submit Workflow</button>
+                    </div>
+
+
+                    
+
+                    
+                    
                     </div>
                 </div>
 
@@ -213,6 +246,19 @@
 
         
 
+    </div>
+
+    <!-- Workflow Info Modal -->
+    <div id="workflow-info-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Workflow Information</h3>
+                <button class="modal-close" onclick="closeWorkflowInfo()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
     </div>
 </body>
 </html>

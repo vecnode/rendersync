@@ -112,7 +112,7 @@ class ComfyUIClient:
         except Exception:
             return False
         
-    async def submit_workflow(self, workflow_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def submit_workflow(self, workflow_data: Dict[str, Any], random_seed: int = None) -> Dict[str, Any]:
         """Submit a workflow to ComfyUI for execution."""
         try:
             # Convert workflow format if needed (frontend uses 'type', API expects 'class_type')
@@ -121,26 +121,9 @@ class ComfyUIClient:
             # Clean up any problematic nodes
             workflow_data = self._clean_workflow_nodes(workflow_data)
             
-            # Debug: Print final workflow structure before sending
-            print(f"FINAL WORKFLOW NODES: {list(workflow_data.get('nodes', {}).keys())}")
-            print(f"FINAL WORKFLOW LINKS: {workflow_data.get('links', [])}")
-            
-            # Check for any remaining #id references in the entire workflow
-            workflow_str = str(workflow_data)
-            if '#id' in workflow_str:
-                print(f"WARNING: Found '#id' reference in workflow: {workflow_str}")
-            
-            # Check if all referenced nodes in links actually exist
-            node_ids = set(workflow_data.get('nodes', {}).keys())
-            links = workflow_data.get('links', [])
-            for link in links:
-                if len(link) >= 4:
-                    source_node = str(link[1])
-                    dest_node = str(link[3])
-                    if source_node not in node_ids:
-                        print(f"WARNING: Link references non-existent source node: {source_node}")
-                    if dest_node not in node_ids:
-                        print(f"WARNING: Link references non-existent dest node: {dest_node}")
+            # Inject random seed if provided
+            if random_seed is not None:
+                self._inject_random_seed(workflow_data, random_seed)
             
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 # Prepare the prompt data - ComfyUI expects only the nodes object
@@ -217,27 +200,20 @@ class ComfyUIClient:
     def _convert_workflow_format(self, workflow_data: Dict[str, Any]) -> Dict[str, Any]:
         """Convert workflow from frontend format to API format."""
         try:
-            print(f"CONVERTING WORKFLOW - Keys: {list(workflow_data.keys())}")
-            print(f"Workflow version: {workflow_data.get('version', 'NO_VERSION')}")
-            
             # Check if this is a frontend workflow (has 'nodes' array with 'type' field)
             if isinstance(workflow_data, dict) and 'nodes' in workflow_data:
                 converted_workflow = workflow_data.copy()
                 
                 # Convert nodes array to API format
                 if isinstance(workflow_data['nodes'], list):
-                    print(f"Found {len(workflow_data['nodes'])} nodes in array format - converting to API format")
                     converted_nodes = {}
                     
                     for i, node in enumerate(workflow_data['nodes']):
-                        print(f"Processing node {i}: id={node.get('id')}, type={node.get('type')}")
-                        
                         if isinstance(node, dict) and 'id' in node:
                             node_id = str(node['id'])
                             
                             # Skip nodes with invalid IDs (like template placeholders)
                             if node_id.startswith('#') or node_id == 'id' or not node_id.isdigit():
-                                print(f"SKIPPING node with invalid ID: {node_id}")
                                 continue
                                 
                             converted_node = node.copy()
@@ -245,12 +221,10 @@ class ComfyUIClient:
                             # Convert 'type' to 'class_type' if present
                             if 'type' in converted_node and 'class_type' not in converted_node:
                                 converted_node['class_type'] = converted_node['type']
-                                print(f"Converted node {node_id}: type='{converted_node['type']}' -> class_type='{converted_node['class_type']}'")
                             
                             # Ensure class_type exists
                             if 'class_type' not in converted_node and 'type' in converted_node:
                                 converted_node['class_type'] = converted_node['type']
-                                print(f"Added class_type for node {node_id}: {converted_node['class_type']}")
                             
                             # Convert inputs from frontend format to API format
                             if 'inputs' in converted_node and isinstance(converted_node['inputs'], list):
@@ -271,9 +245,6 @@ class ComfyUIClient:
                                                     break
                                             if source_node_id:
                                                 converted_inputs[input_name] = [source_node_id, source_slot]
-                                                print(f"Connected {input_name} to node {source_node_id} slot {source_slot}")
-                                            else:
-                                                print(f"Could not find link {link_id} for input {input_name}")
                                         else:
                                             # Handle widget values - get the actual value from widgets_values
                                             widget_name = input_def.get('widget', {}).get('name', input_name)
@@ -290,15 +261,11 @@ class ComfyUIClient:
                                                         # This is a widget input, increment the index
                                                         widget_index += 1
                                                 
-                                                print(f"DEBUG: Input {input_name} is at widget index {widget_index}")
-                                                print(f"DEBUG: Widget values for node {node_id}: {node['widgets_values']}")
-                                                
                                                 # Use the widget index to get the corresponding widget value
                                                 if widget_index < len(node['widgets_values']):
                                                     widget_value = node['widgets_values'][widget_index]
                                                     
                                                     # Special handling for KSampler node to fix the widget values order
-                                                    print(f"DEBUG: Checking override for node {node_id}, type: {node.get('type')}")
                                                     if (node_id == '3' or node_id == 3) and node.get('type') == 'KSampler':
                                                         if input_name == 'seed':
                                                             widget_value = 1005643678076382
@@ -312,117 +279,73 @@ class ComfyUIClient:
                                                             widget_value = 'normal'
                                                         elif input_name == 'denoise':
                                                             widget_value = 1
-                                                        print(f"DEBUG: Override {input_name} to value {widget_value}")
-                                                    
-                                                    print(f"DEBUG: Mapped {input_name} to value {widget_value}")
                                             
                                             if widget_value is not None:
                                                 converted_inputs[input_name] = widget_value
-                                                print(f"Set widget {input_name} = {widget_value}")
                                             else:
                                                 # Fallback to widget name if no value found
                                                 converted_inputs[input_name] = widget_name
-                                                print(f"Using fallback widget {input_name} = {widget_name}")
                                 converted_node['inputs'] = converted_inputs
-                                print(f"Converted inputs for node {node_id}: {converted_node['inputs']}")
                             
                             # Validate that class_type is not empty or invalid
                             if not converted_node.get('class_type') or converted_node.get('class_type') == '#id':
-                                print(f"INVALID class_type for node {node_id}: {converted_node.get('class_type')}")
                                 continue
                             
                             converted_nodes[node_id] = converted_node
-                            print(f"Added node {node_id} to converted_nodes")
-                        else:
-                            print(f"Skipping invalid node {i}: {node}")
                     
                     # Replace nodes array with nodes dict
                     converted_workflow['nodes'] = converted_nodes
-                    
-                    print(f"Converted workflow with {len(converted_nodes)} nodes")
-                    print(f"Node IDs: {list(converted_nodes.keys())}")
                     return converted_workflow
-                else:
-                    print("Nodes is not a list, keeping original format")
             
             # If it's already in API format or doesn't need conversion, return as-is
-            print("No conversion needed, returning original workflow")
-            
-            # Validate API format workflow
-            if isinstance(workflow_data, dict) and 'nodes' in workflow_data:
-                if isinstance(workflow_data['nodes'], dict):
-                    print("Validating API format workflow")
-                    for node_id, node in workflow_data['nodes'].items():
-                        if not node.get('class_type'):
-                            print(f"Node {node_id} missing class_type: {node}")
-                        elif node.get('class_type') == '#id' or node.get('class_type').startswith('#'):
-                            print(f"Node {node_id} has invalid class_type: {node.get('class_type')}")
-            
             return workflow_data
             
         except Exception as e:
-            print(f"Error converting workflow format: {e}")
+            logger.error(f"Error converting workflow format: {e}")
             return workflow_data
     
     def _clean_workflow_nodes(self, workflow_data: Dict[str, Any]) -> Dict[str, Any]:
         """Clean up problematic nodes from workflow."""
         try:
-            print(f"CLEANING WORKFLOW - Keys: {list(workflow_data.keys())}")
-            
             if not isinstance(workflow_data, dict) or 'nodes' not in workflow_data:
-                print("No nodes to clean")
                 return workflow_data
             
             nodes = workflow_data['nodes']
-            print(f"Nodes type: {type(nodes)}")
             
             if not isinstance(nodes, dict):
-                print("Nodes is not a dict, no cleaning needed")
                 return workflow_data
-            
-            print(f"Original node IDs: {list(nodes.keys())}")
             
             cleaned_nodes = {}
             removed_nodes = []
             
             for node_id, node in nodes.items():
-                print(f"Checking node {node_id}: class_type={node.get('class_type', 'MISSING')}")
-                
                 # Skip nodes with problematic IDs
                 if node_id.startswith('#') or node_id == 'id' or not node_id:
-                    print(f"REMOVING node with problematic ID: {node_id}")
                     removed_nodes.append(node_id)
                     continue
                 
                 # Skip nodes without class_type
                 if not node.get('class_type'):
-                    print(f"REMOVING node without class_type: {node_id}")
                     removed_nodes.append(node_id)
                     continue
                 
                 # Skip nodes with problematic class_type
                 if node.get('class_type') == '#id' or node.get('class_type').startswith('#'):
-                    print(f"REMOVING node with problematic class_type: {node_id} -> {node.get('class_type')}")
                     removed_nodes.append(node_id)
                     continue
                 
                 cleaned_nodes[node_id] = node
             
             if removed_nodes:
-                print(f"Removed {len(removed_nodes)} problematic nodes: {removed_nodes}")
-                print(f"Kept {len(cleaned_nodes)} valid nodes")
-                
                 # Update workflow with cleaned nodes
                 cleaned_workflow = workflow_data.copy()
                 cleaned_workflow['nodes'] = cleaned_nodes
                 return cleaned_workflow
-            else:
-                print("No nodes needed to be removed")
             
             return workflow_data
             
         except Exception as e:
-            print(f"Error cleaning workflow nodes: {e}")
+            logger.error(f"Error cleaning workflow nodes: {e}")
             return workflow_data
     
     async def get_history(self, prompt_id: str) -> Dict[str, Any]:
@@ -549,6 +472,19 @@ class ComfyUIClient:
                 "error": f"Error getting workflow outputs: {str(e)}"
             }
 
+    def _inject_random_seed(self, workflow_data: Dict[str, Any], random_seed: int) -> None:
+        """Inject a random seed into KSampler nodes to ensure unique generations."""
+        try:
+            nodes = workflow_data.get('nodes', {})
+            for node_id, node in nodes.items():
+                if node.get('class_type') == 'KSampler':
+                    # Update the seed input
+                    if 'inputs' in node:
+                        node['inputs']['seed'] = random_seed
+                        logger.info(f"Injected random seed {random_seed} into KSampler node {node_id}")
+        except Exception as e:
+            logger.warning(f"Error injecting random seed: {e}")
+
 
 def load_workflow_from_file(file_path: str) -> Dict[str, Any]:
     """Load workflow data from a JSON file."""
@@ -556,21 +492,6 @@ def load_workflow_from_file(file_path: str) -> Dict[str, Any]:
         with open(file_path, 'r', encoding='utf-8') as f:
             workflow_data = json.load(f)
             logger.info(f"Loaded workflow from {file_path}")
-            logger.info(f"Workflow keys: {list(workflow_data.keys())}")
-            
-            # Validate workflow structure
-            if 'nodes' in workflow_data:
-                nodes = workflow_data['nodes']
-                logger.info(f"Nodes type: {type(nodes)}")
-                if isinstance(nodes, list):
-                    logger.info(f"Found {len(nodes)} nodes in array format")
-                    for i, node in enumerate(nodes):
-                        logger.info(f"Node {i}: id={node.get('id')}, type={node.get('type')}")
-                elif isinstance(nodes, dict):
-                    logger.info(f"Found {len(nodes)} nodes in dict format")
-                    for node_id, node in nodes.items():
-                        logger.info(f"Node {node_id}: class_type={node.get('class_type')}")
-            
             return workflow_data
     except FileNotFoundError:
         logger.error(f"Workflow file not found: {file_path}")

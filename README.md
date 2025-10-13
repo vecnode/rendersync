@@ -1,6 +1,6 @@
-## rendersync
+# rendersync
 
-This repository contains `rendersync` an open platform for Local/Private/Modular inference and render scheduling to be used in Studios/Warehouses or even Installations/Renderfarms. It can be used as a modular and adaptive edge/process orchestrator and inspector.  
+This repository contains `rendersync` an open platform to schedule renders used in studios/warehouses/renderfarms. Currently supports platforms: 1) ComfyUI, 2) Ollama. It can be used as a modular and adaptive edge/process orchestrator and inspector, submit AI render workflows fast.  
 
 Running the System and Developing:  
 - Windows 11 Laptop, NVIDIA GeForce RTX 4050 6Gb. 
@@ -9,12 +9,13 @@ Running the System and Developing:
 The purpose of this project is to provide an adaptible software that runs in Windows/Linux terminals and accessible through the browser; it has its own dedicated server, the Core, and several Modules plug in.
 
 
-#### Dependencies:  
+### Dependencies:  
 ```
 Python 3.10+ (e.g. version 3.13.7)   
 git (e.g. version 2.51.0.windows.1)   
 ```
-#### Libraries:  
+
+### Libraries:  
 ```
 fastapi>=0.115.0  
 uvicorn[standard]>=0.30.0  
@@ -23,13 +24,13 @@ pydantic>=2.7.0
 psutil>=5.9.8  
 ```
 
-#### Module Libraries: 
+### Module Libraries: 
 ```
 ollama (e.g. version 0.11.8)   
 ComfyUI (e.g. version 0.3.64)  
 ```
 
-####  Development rules:   
+###  Development rules:   
 1: Target low-cost deployment across the maximum number of computers.    
 2: Design `rendersync` folder containing the core and default modules, as a portable and lightweight package, which interfaces with other softwares (Core has Server, FastAPI).    
 3: Build system should be Explainable and with user input when possible to offer modularity and choice.    
@@ -37,7 +38,7 @@ ComfyUI (e.g. version 0.3.64)
 5: This `README.md` document and other Markdown files `*.md` should always be edited by a qualified human reviewer and agents should be blocked from editing or creating `*.md` files.   
 
 
-#### Features completed
+### Features completed
 
 `rendersync`
 - Server (core)
@@ -57,7 +58,7 @@ ComfyUI (e.g. version 0.3.64)
     - ComfyUI: Inspect, Start/Stop, submit example workflow
 
 
-##### Reproduce Windows 11
+#### Reproduce Windows 11
 
 ```
 # cd to .\rendersync\
@@ -92,6 +93,6 @@ ollama list
 - Make a test suite for the core and each module/submodule. 
 
 
-#### License
+### License
 MIT
 
