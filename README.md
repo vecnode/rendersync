@@ -1,6 +1,6 @@
 # rendersync
 
-This repository contains `rendersync` an open platform to schedule renders used in studios/warehouses/renderfarms. Currently supports platforms: 1) ComfyUI, 2) Ollama. It can be used as a modular and adaptive edge/process orchestrator and inspector, submit AI render workflows fast.  
+This repository contains `rendersync` an open platform to schedule renders used in studios/warehouses/renderfarms. Currently supports platforms: 1) ComfyUI, 2) Ollama. It can be used as a modular and adaptive edge/process orchestrator and inspector, submit AI render workflows fast.   
 
 Running the System and Developing:  
 - Windows 11 Laptop, NVIDIA GeForce RTX 4050 6Gb. 
@@ -73,20 +73,22 @@ ollama list
 
 #### In development
 
-- Add a global open/close of endpoints.
-- Add trainer file as module - fine-tuning stack to see.
-- Check more Host OSs, multiple machines.
-- Available Models in every system that we have to download and everything. in one line with the combo.  Comfy too
-- Fast way to search for model types such as `.pt` and `.safetensors` or `.gguf`
-- Inspect Torch processes on the network and tensor computation.
-- Call jobs through SSH.    
-- Download models in the interface, find a way to download ollama models (default, or input the name so it know how to search the official channels) - ollama specific, on a combo with a download button (ollama command and remove too).
-- Maybe add Bootstrap to the frontend: https://getbootstrap.com/
-- Ollama scheduling so we can make questions at specific times of day and weeks in a row.   
-- Refactor the codebase to act only on one Disk `C:/` at the time and we can change according to what we can see at the top.   
-- Make this server receive json calls that are sent to the comfyui as well and ollama, maybe a structured rendersync JSON file that is read through the server, the ability to have specific jobs called through rendersync - such as image-to-image.
+- Test calling renders from secondary `rendersync` to a machine with 24Gb and call SD1.5    
+- Add a global open/close of endpoints.   
+- Add trainer file as module - fine-tuning stack to see.    
+- Get the progress bar from the models generating on comfy terminal to the browser.   
+- Check more Host OSs, multiple machines.   
+- Available Models in every system that we have to download and everything. in one line with the combo.  Comfy too   
+- Fast way to search for model types such as `.pt` and `.safetensors` or `.gguf`   
+- Inspect Torch processes on the network and tensor computation.   
+- Call jobs through SSH.      
+- Download models in the interface, find a way to download ollama models (default, or input the name so it know how to search the official channels) - ollama specific, on a combo with a download button (ollama command and remove too).   
+- Maybe add Bootstrap to the frontend: https://getbootstrap.com/   
+- Ollama scheduling so we can make questions at specific times of day and weeks in a row.     
+- Refactor the codebase to act only on one Disk `C:/` at the time and we can change according to what we can see at the top.     
+- Make this server receive json calls that are sent to the comfyui as well and ollama, maybe a structured rendersync JSON file that is read through the server, the ability to have specific jobs called through rendersync - such as image-to-image.   
 - A comparison module with some metrics.
-- Call ollama on a different machine same network.
+- Call ollama on a different machine same network. 
 - Maybe consider multiple rendersyncs for multiple users constantly on.  
 - After starting a submodule check again it really started process and lock the button to start.   
 - Link to the new guidelines repository will be linked here for guardrails.

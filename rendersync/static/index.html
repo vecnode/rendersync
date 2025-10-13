@@ -11,7 +11,18 @@
 <body>
     <div class="container">
         <div class="header">
-            <p>rendersync core</p>
+            <p>rendersync</p>
+        </div>
+
+        <div class="module">
+            (core module)
+            <br>
+            TODO the input/output connections here, jobs called and jobs received to be called
+            <br>
+            TODO open/close endpoints
+            <br>
+            TODO connections and browsers that connected
+
         </div>
 
         <div class="module">
@@ -64,53 +75,54 @@
                 </tbody>
             </table>
             </div>
-        </div>
-
-        <div class="module">
+        
+            <br>
             <p><button onclick="toggleModule('interaction-module')" class="module-collapse-btn">-</button>(interaction module)</p>
+
             <div id="interaction-module">
-            <br>
-            <input type="number" id="port-input" placeholder="(1-65535)" min="1" max="65535"">
-            <button id="inspect-port" onclick="inspectPort()">Inspect Port</button>
-            <table class="system-table">
-                <thead>
-                    <tr>
-                        <th>Property</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <tbody id="port-inspection-rows">
-                </tbody>
-            </table>
-            <br>
-            <input type="text" id="pid-input" placeholder="Enter PID number">
-            <button id="inspect-pid" onclick="inspectPID()">Inspect PID</button>
-            <table class="system-table">
-                <thead>
-                    <tr>
-                        <th>Property</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <tbody id="pid-inspection-rows">
-                </tbody>
-            </table>
-            <br>
-            <input type="text" id="ping-input" placeholder="IP address or hostname" style="width: 200px;">
-            <input type="number" id="ping-port-input" placeholder="Port (optional)" min="1" max="65535" style="width: 120px;">
-            <button id="ping-ip" onclick="pingIP()">Ping IP</button>
-            <table class="system-table">
-                <thead>
-                    <tr>
-                        <th>Property</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <tbody id="ping-results-rows">
-                </tbody>
-            </table>
-            <br>
+                <br>
+                <input type="number" id="port-input" placeholder="(1-65535)" min="1" max="65535"">
+                <button id="inspect-port" onclick="inspectPort()">Inspect Port</button>
+                <table class="system-table">
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="port-inspection-rows">
+                    </tbody>
+                </table>
+                <br>
+                <input type="text" id="pid-input" placeholder="Enter PID number">
+                <button id="inspect-pid" onclick="inspectPID()">Inspect PID</button>
+                <table class="system-table">
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pid-inspection-rows">
+                    </tbody>
+                </table>
+                <br>
+                <input type="text" id="ping-input" placeholder="IP address or hostname" style="width: 200px;">
+                <input type="number" id="ping-port-input" placeholder="Port (optional)" min="1" max="65535" style="width: 120px;">
+                <button id="ping-ip" onclick="pingIP()">Ping IP</button>
+                <table class="system-table">
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ping-results-rows">
+                    </tbody>
+                </table>
+                <br>
             </div>
+        
         </div>
 
         <div class="module">
@@ -165,7 +177,7 @@
                 <br>
 
                 <div class="submodule">
-                    <p><button onclick="toggleModule('comfyui-submodule')" class="module-collapse-btn">-</button>(submodule comfyui)</p>
+                    <p><button onclick="toggleModule('comfyui-submodule')" class="module-collapse-btn">-</button>(submodule ComfyUI)</p>
                     <div id="comfyui-submodule">
                     <br>
                     <button id="inspect-comfyui" onclick="inspectComfyUI()">Inspect ComfyUI</button>

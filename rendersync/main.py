@@ -27,7 +27,7 @@ from pydantic import BaseModel
 # System monitoring and diagnostics modules
 from .modules.system import get_system_info_data, inspect_pid_data, ping_ip_data, ping_multiple_ips_data
 from .modules.network import get_network_info_data
-from .modules.interaction import inspect_port
+from .modules.network import inspect_port
 
 # Utility modules for process management and system operations
 from .modules.utilities import track_spawned_process, check_application_timeout, cleanup_processes, get_application_status, get_terminal_info, get_apps_running_info

@@ -23,7 +23,7 @@ async function loadSystemInfo() {
         const data = await response.json();
         
         if (data.error) {
-            document.getElementById('system-info-rows').innerHTML = `<tr><td colspan="2" style="color: red;">Error: ${data.error}</td></tr>`;
+            document.getElementById('system-info-rows').innerHTML = `<tr><td colspan="2">Error: ${data.error}</td></tr>`;
             return;
         }
         
@@ -89,7 +89,7 @@ async function loadSystemInfo() {
             rows.innerHTML = rowData.map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td></tr>`).join('');
         }
     } catch (error) {
-        document.getElementById('system-info-rows').innerHTML = `<tr><td colspan="2" style="color: red;">Error loading system info: ${error.message}</td></tr>`;
+        document.getElementById('system-info-rows').innerHTML = `<tr><td colspan="2">Error loading system info: ${error.message}</td></tr>`;
     }
 }
 
@@ -103,7 +103,7 @@ async function loadNetworkInfo() {
         const data = await response.json();
         
         if (data.error) {
-            document.getElementById('network-info-rows').innerHTML = `<tr><td colspan="2" style="color: red;">Error: ${data.error}</td></tr>`;
+            document.getElementById('network-info-rows').innerHTML = `<tr><td colspan="2">Error: ${data.error}</td></tr>`;
             return;
         }
         
@@ -184,7 +184,7 @@ async function loadNetworkInfo() {
             rows.innerHTML = rowData.map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td></tr>`).join('');
         }
     } catch (error) {
-        document.getElementById('network-info-rows').innerHTML = `<tr><td colspan="2" style="color: red;">Error loading network info: ${error.message}</td></tr>`;
+        document.getElementById('network-info-rows').innerHTML = `<tr><td colspan="2">Error loading network info: ${error.message}</td></tr>`;
     }
 }
 
@@ -198,7 +198,7 @@ async function loadTerminalInfo() {
         const data = await response.json();
         
         if (data.error) {
-            document.getElementById('terminal-info-rows').innerHTML = `<tr><td colspan="2" style="color: red;">Error: ${data.error}</td></tr>`;
+            document.getElementById('terminal-info-rows').innerHTML = `<tr><td colspan="2">Error: ${data.error}</td></tr>`;
             return;
         }
         
@@ -301,18 +301,18 @@ async function inspectPort() {
     
     const port = portInput.value.trim();
     if (!port) {
-        rows.innerHTML = '<tr><td colspan="2" style="color: red;">Please enter a port number</td></tr>';
+        rows.innerHTML = '<tr><td colspan="2">Please enter a port number</td></tr>';
         return;
     }
     
     if (port < 1 || port > 65535) {
-        rows.innerHTML = '<tr><td colspan="2" style="color: red;">Port must be between 1 and 65535</td></tr>';
+        rows.innerHTML = '<tr><td colspan="2">Port must be between 1 and 65535</td></tr>';
         return;
     }
     
     button.disabled = true;
     button.textContent = 'Inspecting';
-    rows.innerHTML = '<tr><td colspan="2" style="color: blue;">Inspecting port ' + port + '</td></tr>';
+    rows.innerHTML = '<tr><td colspan="2">Inspecting port ' + port + '</td></tr>';
     
     try {
         const response = await fetch('/api/inspect-port', {
@@ -326,7 +326,7 @@ async function inspectPort() {
         const data = await response.json();
         
         if (data.error) {
-            rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error: ${data.error}</td></tr>`;
+            rows.innerHTML = `<tr><td colspan="2">Error: ${data.error}</td></tr>`;
         } else {
             const rowData = [];
             
@@ -371,7 +371,7 @@ async function inspectPort() {
             }
         }
     } catch (error) {
-        rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error inspecting port: ${error.message}</td></tr>`;
+        rows.innerHTML = `<tr><td colspan="2">Error inspecting port: ${error.message}</td></tr>`;
     } finally {
         button.disabled = false;
         button.textContent = 'Inspect Port';
@@ -389,13 +389,13 @@ async function inspectPID() {
     
     const pid = pidInput.value.trim();
     if (!pid) {
-        rows.innerHTML = '<tr><td colspan="2" style="color: red;">Please enter a PID number</td></tr>';
+        rows.innerHTML = '<tr><td colspan="2">Please enter a PID number</td></tr>';
         return;
     }
     
     button.disabled = true;
     button.textContent = 'Inspecting';
-    rows.innerHTML = '<tr><td colspan="2" style="color: blue;">Inspecting PID ' + pid + '</td></tr>';
+    rows.innerHTML = '<tr><td colspan="2">Inspecting PID ' + pid + '</td></tr>';
     
     try {
         const response = await fetch('/api/inspect-pid', {
@@ -409,7 +409,7 @@ async function inspectPID() {
         const data = await response.json();
         
         if (data.error) {
-            rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error: ${data.error}</td></tr>`;
+            rows.innerHTML = `<tr><td colspan="2">Error: ${data.error}</td></tr>`;
         } else {
             const rowData = [];
             
@@ -483,13 +483,13 @@ async function pingIP() {
     const port = portInput.value.trim();
     
     if (!target) {
-        rows.innerHTML = '<tr><td colspan="2" style="color: red;">Please enter an IP address or hostname</td></tr>';
+        rows.innerHTML = '<tr><td colspan="2">Please enter an IP address or hostname</td></tr>';
         return;
     }
     
     button.disabled = true;
     button.textContent = 'Pinging';
-    rows.innerHTML = '<tr><td colspan="2" style="color: blue;">Pinging ' + target + (port ? ':' + port : '') + '</td></tr>';
+    rows.innerHTML = '<tr><td colspan="2">Pinging ' + target + (port ? ':' + port : '') + '</td></tr>';
     
     try {
         const requestBody = {
@@ -512,7 +512,7 @@ async function pingIP() {
         const data = await response.json();
         
         if (data.error) {
-            rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error: ${data.error}</td></tr>`;
+            rows.innerHTML = `<tr><td colspan="2">Error: ${data.error}</td></tr>`;
         } else {
             const rowData = [];
             
@@ -566,7 +566,7 @@ async function pingIP() {
             }
         }
     } catch (error) {
-        rows.innerHTML = `<tr><td colspan="2" style="color: red;">Error pinging: ${error.message}</td></tr>`;
+        rows.innerHTML = `<tr><td colspan="2">Error pinging: ${error.message}</td></tr>`;
     } finally {
         button.disabled = false;
         button.textContent = 'Ping IP';
@@ -978,7 +978,7 @@ async function loadAppsRunningInfo() {
         const data = await response.json();
         
         if (data.error) {
-            document.getElementById('apps-running-info-rows').innerHTML = `<tr><td colspan="2" style="color: red;">Error: ${data.error}</td></tr>`;
+            document.getElementById('apps-running-info-rows').innerHTML = `<tr><td colspan="2">Error: ${data.error}</td></tr>`;
             return;
         }
         
@@ -1036,7 +1036,7 @@ async function loadAppsRunningInfo() {
             }).join('');
         }
     } catch (error) {
-        document.getElementById('apps-running-info-rows').innerHTML = `<tr><td colspan="2" style="color: red;">Error loading apps info: ${error.message}</td></tr>`;
+        document.getElementById('apps-running-info-rows').innerHTML = `<tr><td colspan="2">Error loading apps info: ${error.message}</td></tr>`;
     }
 }
 
@@ -1329,7 +1329,7 @@ async function loadWorkflows() {
         }
     } catch (error) {
         console.error('Failed to load workflows:', error);
-        document.getElementById('workflow-list').innerHTML = '<div style="color: red; font-size: 12px;">Failed to load workflows</div>';
+        document.getElementById('workflow-list').innerHTML = '<div font-size: 12px;">Failed to load workflows</div>';
     }
 }
 

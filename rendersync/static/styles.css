@@ -49,7 +49,7 @@ body {
     padding: 20px;
     background: hsl(0, 0%, 100%);  /* Pure white background for maximum contrast */
     border-radius: 10px;
-    border: 2px solid #ff0000;  /* Red accent border */
+    border: 2px solid #1100ff;  /* Red accent border for branding */
 }
 
 /* ======================================================================================= */
@@ -61,7 +61,7 @@ body {
     padding: 20px;
     background: hsl(0, 0%, 100%);  /* Professional blue background */
     border-radius: 10px;
-    border: 2px solid #ff0000;  /* Red accent border for branding */
+    border: 2px solid #1100ff;  /* Red accent border for branding */
 }
 
 /* Module heading styling with consistent spacing */
@@ -178,8 +178,9 @@ textarea:focus {
     font-size: 14px;
 }
 
-/* System information tables with professional styling */
-.system-table {
+/* Unified table styling for all tables */
+.system-table,
+.network-table {
     width: 100%;
     border-collapse: collapse;  /* Clean table borders */
     margin-top: 15px;
@@ -187,12 +188,16 @@ textarea:focus {
     background-color: #e9ecef;  /* Light background for readability */
     font-family: 'Segoe UI', 'Aptos', 'SF Pro Display', 'Helvetica Neue', 'Arial', sans-serif;
     font-size: 14px;
-    border-radius: 4px;  /* Rounded corners for modern appearance */
+    max-height: 500px;  /* Approximately 20 rows at 25px per row */
+    overflow-y: auto;  /* Vertical scroll when content exceeds height */
+    display: block;  /* Required for overflow to work */
 }
 
-/* System table cell styling with proper spacing and text handling */
+/* Unified table cell styling */
 .system-table th,
-.system-table td {
+.system-table td,
+.network-table th,
+.network-table td {
     border: 1px solid grey;  /* Consistent cell borders */
     padding: 2px;  /* Minimal padding for compact display */
     font-weight: normal;  /* Regular font weight for readability */
@@ -200,24 +205,18 @@ textarea:focus {
     max-width: 300px;  /* Prevent excessively wide columns */
 }
 
-/* Network table */
-.network-table {
+/* Unified table structure styling */
+.system-table thead,
+.system-table tbody,
+.system-table tr,
+.network-table thead,
+.network-table tbody,
+.network-table tr {
+    display: table;  /* Restore table display for proper column alignment */
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-    border: 1px solid grey;
-    background-color: #e9ecef;
-    font-family: 'Segoe UI', 'Aptos', 'SF Pro Display', 'Helvetica Neue', 'Arial', sans-serif;
-    font-size: 14px;
-    border-radius: 4px;
+    table-layout: fixed;  /* Fixed layout for consistent column widths */
 }
 
-.network-table th,
-.network-table td {
-    border: 1px solid grey;
-    padding: 2px;
-    font-weight: normal;
-}
 
 /* ======================================================================================= */
 /* OLLAMA CHAT STYLES */
