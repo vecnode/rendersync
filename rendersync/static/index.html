@@ -15,14 +15,28 @@
         </div>
 
         <div class="module">
-            (core module)
-            <br>
-            TODO the input/output connections here, jobs called and jobs received to be called
-            <br>
-            TODO open/close endpoints
-            <br>
-            TODO connections and browsers that connected
-
+            <p><button onclick="toggleModule('core-module')" class="module-collapse-btn">-</button>(core module)</p>
+            <div id="core-module">
+                <br>
+                <button id="refresh-connections" onclick="loadConnections()">Refresh Connections</button>
+                <button id="clear-connections" onclick="clearConnections()">Clear Log</button>
+                
+                <div id="connections-console" class="connections-console">
+                    <div class="console-header">
+                        <span>Active Browser Connections</span>
+                        <span id="connection-count">0 connections</span>
+                    </div>
+                    <div id="connections-log" class="console-log">
+                        <div class="console-entry">Console ready. Waiting for connections</div>
+                    </div>
+                </div>
+                
+                <br>
+                <div class="status-box">
+                    <strong>Core Module Status:</strong><br>
+                    <span id="core-status">Initializing</span>
+                </div>
+            </div>
         </div>
 
         <div class="module">

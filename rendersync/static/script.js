@@ -1304,6 +1304,110 @@ async function startComfyUI() {
 }
 
 // ============================================================================
+// CONNECTIONS CONSOLE FUNCTIONS
+// ============================================================================
+
+let connectionCount = 0;
+let connections = new Map();
+
+function loadConnections() {
+    const button = document.getElementById('refresh-connections');
+    const status = document.getElementById('core-status');
+    
+    button.disabled = true;
+    button.textContent = 'Refreshing...';
+    status.textContent = 'Loading connection data...';
+    
+    // Simulate loading connections (in a real implementation, this would fetch from the server)
+    setTimeout(() => {
+        addConsoleEntry('Refreshing connection list...', 'connection-info');
+        
+        // Add some sample connections for demonstration
+        if (connectionCount === 0) {
+            addConnection('127.0.0.1:8080', 'Chrome', 'Windows 11');
+            addConnection('127.0.0.1:8081', 'Edge', 'Windows 11');
+        }
+        
+        updateConnectionCount();
+        status.textContent = `Active: ${connectionCount} connections`;
+        
+        button.disabled = false;
+        button.textContent = 'Refresh Connections';
+    }, 1000);
+}
+
+function addConnection(ip, browser, os) {
+    const connectionId = `${ip}_${Date.now()}`;
+    connections.set(connectionId, {
+        ip: ip,
+        browser: browser,
+        os: os,
+        timestamp: new Date(),
+        status: 'active'
+    });
+    
+    connectionCount++;
+    addConsoleEntry(`New connection: ${browser} from ${ip} (${os})`, 'connection-new');
+}
+
+function removeConnection(connectionId) {
+    if (connections.has(connectionId)) {
+        const conn = connections.get(connectionId);
+        connections.delete(connectionId);
+        connectionCount--;
+        addConsoleEntry(`Connection lost: ${conn.browser} from ${conn.ip}`, 'connection-lost');
+    }
+}
+
+function addConsoleEntry(message, type = 'connection-info') {
+    const consoleLog = document.getElementById('connections-log');
+    const timestamp = new Date().toLocaleTimeString();
+    
+    const entry = document.createElement('div');
+    entry.className = `console-entry ${type}`;
+    entry.innerHTML = `<span class="console-timestamp">[${timestamp}]</span>${message}`;
+    
+    consoleLog.appendChild(entry);
+    
+    // Auto-scroll to bottom
+    consoleLog.scrollTop = consoleLog.scrollHeight;
+}
+
+function clearConnections() {
+    const consoleLog = document.getElementById('connections-log');
+    consoleLog.innerHTML = '<div class="console-entry">Console cleared. Waiting for connections</div>';
+    
+    connections.clear();
+    connectionCount = 0;
+    updateConnectionCount();
+    
+    const status = document.getElementById('core-status');
+    status.textContent = 'Console cleared';
+}
+
+function updateConnectionCount() {
+    const countElement = document.getElementById('connection-count');
+    countElement.textContent = `${connectionCount} connection${connectionCount !== 1 ? 's' : ''}`;
+}
+
+// Simulate periodic connection updates
+function startConnectionMonitoring() {
+    setInterval(() => {
+        // In a real implementation, this would check actual server connections
+        // For now, we'll just update the status
+        const status = document.getElementById('core-status');
+        if (status.textContent.includes('Initializing')) {
+            status.textContent = `Monitoring ${connectionCount} connections`;
+        }
+    }, 5000);
+}
+
+// Initialize connection monitoring when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    startConnectionMonitoring();
+});
+
+// ============================================================================
 // WORKFLOW MANAGEMENT FUNCTIONS
 // ============================================================================
 
