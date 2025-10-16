@@ -15,32 +15,25 @@
         </div>
 
         <div class="module">
-            <p><button onclick="toggleModule('core-module')" class="module-collapse-btn">-</button>(core module)</p>
+            <p><button onclick="toggleModuleCSSBlock('core-module')" class="module-collapse-btn">-</button>(core module)</p>
             <div id="core-module">
                 <br>
                 <button id="refresh-connections" onclick="loadConnections()">Refresh Connections</button>
-                <button id="clear-connections" onclick="clearConnections()">Clear Log</button>
                 
                 <div id="connections-console" class="connections-console">
                     <div class="console-header">
-                        <span>Active Browser Connections</span>
+                        Browser Connections
                         <span id="connection-count">0 connections</span>
                     </div>
-                    <div id="connections-log" class="console-log">
-                        <div class="console-entry">Console ready. Waiting for connections</div>
-                    </div>
+                    <div id="connections-log" class="console-log"></div>
                 </div>
                 
                 <br>
-                <div class="status-box">
-                    <strong>Core Module Status:</strong><br>
-                    <span id="core-status">Initializing</span>
-                </div>
             </div>
         </div>
 
         <div class="module">
-            <p><button onclick="toggleModule('network-module')" class="module-collapse-btn">-</button>(network module)</p>
+            <p><button onclick="toggleModuleCSSBlock('network-module')" class="module-collapse-btn">-</button>(network module)</p>
             <div id="network-module">
                 <br>
                 <button id="refresh-system-info" onclick="loadSystemInfo()">Get System Info</button>
@@ -48,52 +41,47 @@
                 <button id="refresh-terminal-info" onclick="loadTerminalInfo()">Get Terminal Info</button>
                 <button id="refresh-apps-running-info" onclick="loadAppsRunningInfo()">Apps Running Info</button>
 
-            <table class="system-table">
-                <thead>
-                    <tr>
-                        <th>Property</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <tbody id="system-info-rows">
-                </tbody>
-            </table>
-            <table class="network-table">
-                <thead>
-                    <tr>
-                        <th>Property</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <tbody id="network-info-rows">
-                </tbody>
-            </table>
-            <table class="system-table">
-                <thead>
-                    <tr>
-                        <th>Property</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <tbody id="terminal-info-rows">
-                </tbody>
-            </table>
-            <table class="system-table">
-                <thead>
-                    <tr>
-                        <th>Property</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <tbody id="apps-running-info-rows">
-                </tbody>
-            </table>
-            </div>
-        
-            <br>
-            <p><button onclick="toggleModule('interaction-module')" class="module-collapse-btn">-</button>(interaction module)</p>
-
-            <div id="interaction-module">
+                <table class="system-table">
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="system-info-rows">
+                    </tbody>
+                </table>
+                <table class="network-table">
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="network-info-rows">
+                    </tbody>
+                </table>
+                <table class="system-table">
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="terminal-info-rows">
+                    </tbody>
+                </table>
+                <table class="system-table">
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="apps-running-info-rows">
+                    </tbody>
+                </table>
+                
                 <br>
                 <input type="number" id="port-input" placeholder="(1-65535)" min="1" max="65535"">
                 <button id="inspect-port" onclick="inspectPort()">Inspect Port</button>
@@ -135,16 +123,20 @@
                     </tbody>
                 </table>
                 <br>
+
             </div>
+        
+            
+            
         
         </div>
 
         <div class="module">
-            <p><button onclick="toggleModule('inference-module')" class="module-collapse-btn">-</button>(inference module)</p>
+            <p><button onclick="toggleModuleCSSBlock('inference-module')" class="module-collapse-btn">-</button>(inference module)</p>
             <div id="inference-module">
                 <br>
                 <div class="submodule">
-                    <p><button onclick="toggleModule('ollama-submodule')" class="module-collapse-btn">-</button>(submodule ollama)</p>
+                    <p><button onclick="toggleModuleCSSBlock('ollama-submodule')" class="module-collapse-btn">-</button>(submodule ollama)</p>
                     <div id="ollama-submodule">
                     <br>
                     <button id="inspect-ollama" onclick="inspectOllama()">Inspect ollama</button>
@@ -184,6 +176,10 @@
                     <button id="query-ollama" onclick="queryOllama()">Query ollama</button>
                     
                     <div id="ollama-chat" class="ollama-chat">
+                        <div class="ollama-chat-header">
+                            Ollama Chat Console
+                        </div>
+                        <div id="ollama-chat-log" class="ollama-chat-log"></div>
                     </div>
                     </div>
                 </div>
@@ -191,7 +187,7 @@
                 <br>
 
                 <div class="submodule">
-                    <p><button onclick="toggleModule('comfyui-submodule')" class="module-collapse-btn">-</button>(submodule ComfyUI)</p>
+                    <p><button onclick="toggleModuleCSSBlock('comfyui-submodule')" class="module-collapse-btn">-</button>(submodule ComfyUI)</p>
                     <div id="comfyui-submodule">
                     <br>
                     <button id="inspect-comfyui" onclick="inspectComfyUI()">Inspect ComfyUI</button>
@@ -243,11 +239,11 @@
 
                         
                         
-                        <button id="open-workflow-btn" onclick="openWorkflowDialog()" style="margin-bottom: 15px;">Upload Workflow</button>
-                        <input type="file" id="workflow-file-input" accept=".json" style="display: none;" onchange="uploadWorkflow()">
+                        <button id="open-workflow-btn" onclick="openComfyUIWorkflowDialog()" style="margin-bottom: 15px;">Open Workflow</button>
+                        <input type="file" id="workflow-file-input" accept=".json" style="display: none;" onchange="uploadComfyUIWorkflow()">
                         <br>
                         <input type="number" id="seed-input" placeholder="Enter seed" min="0" max="999999999999999" style="width: 250px;">
-                        <button id="submit-workflow" onclick="submitWorkflow()">Submit Workflow</button>
+                        <button id="submit-workflow" onclick="submitComfyUIWorkflow()">Submit Workflow</button>
                     </div>
 
 
@@ -264,7 +260,7 @@
         </div>
 
         <div class="module">
-            <p><button onclick="toggleModule('training-module')" class="module-collapse-btn">-</button>(training module)</p>
+            <p><button onclick="toggleModuleCSSBlock('training-module')" class="module-collapse-btn">-</button>(training module)</p>
             <div id="training-module">
                 <br><br>
             </div>
@@ -274,18 +270,9 @@
 
     </div>
 
-    <!-- Workflow Info Modal -->
-    <div id="workflow-info-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modal-title">Workflow Information</h3>
-                <button class="modal-close" onclick="closeWorkflowInfo()">&times;</button>
-            </div>
-            <div class="modal-body" id="modal-body">
-                <!-- Content will be populated by JavaScript -->
-            </div>
-        </div>
-    </div>
+    <br><br>
+
+
 </body>
 </html>
 

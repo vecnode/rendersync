@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 import shutil
 import os
+from ..config import OLLAMA_BASE_URL, OLLAMA_DEFAULT_MODEL, OLLAMA_GENERATION_OPTIONS
 
 class OllamaClient:
     """Client for interacting with Ollama API."""
@@ -89,7 +90,7 @@ class OllamaClient:
                                 continue
             return gen()
     
-    async def simple_chat(self, message: str) -> dict:
+    async def simple_chat(self, message: str, model: str = None) -> dict:
         """Send a simple chat message to Ollama and return the response."""
         try:
             # First check if Ollama is responding
@@ -121,9 +122,38 @@ class OllamaClient:
                             "response": "No models found. Please install a model first using 'Get ollama Models' to see available models."
                         }
                     
-                    # Use the first available model
-                    model_name = models[0]["name"]
-                    logger.info(f"Using model: {model_name}")
+                    # Use provided model, or try default model, or fallback to first available
+                    if model:
+                        # Check if provided model is available
+                        model_available = False
+                        for m in models:
+                            if m["name"] == model:
+                                model_available = True
+                                break
+                        
+                        if model_available:
+                            model_name = model
+                            logger.info(f"Using selected model: {model_name}")
+                        else:
+                            # Provided model not available, fallback to default
+                            model_name = OLLAMA_DEFAULT_MODEL
+                            logger.warning(f"Selected model '{model}' not available, trying default: {model_name}")
+                    else:
+                        # No model provided, use default
+                        model_name = OLLAMA_DEFAULT_MODEL
+                        logger.info(f"No model specified, using default: {model_name}")
+                    
+                    # Check if chosen model is available
+                    model_available = False
+                    for m in models:
+                        if m["name"] == model_name:
+                            model_available = True
+                            break
+                    
+                    # If chosen model not available, use first available
+                    if not model_available:
+                        model_name = models[0]["name"]
+                        logger.info(f"Chosen model not available, using first available: {model_name}")
                     
                 except httpx.ConnectError:
                     return {
@@ -147,7 +177,7 @@ class OllamaClient:
             # Send chat message
             try:
                 messages = [{"role": "user", "content": message}]
-                response = await self.chat(model_name, messages, stream=False)
+                response = await self.chat(model_name, messages, options=OLLAMA_GENERATION_OPTIONS, stream=False)
                 
                 if response and "message" in response:
                     return {
@@ -197,7 +227,7 @@ class OllamaManager:
         self.ollama_process: Optional[subprocess.Popen] = None
         self.ollama_pid: Optional[int] = None
         self.is_external_process = False
-        self.base_url = "http://127.0.0.1:11434"
+        self.base_url = OLLAMA_BASE_URL
         
     def is_port_in_use(self, port: int) -> bool:
         """Check if a port is in use by trying to bind to it."""
@@ -701,7 +731,7 @@ class OllamaManager:
 
 
 # Convenience functions for easy access
-def create_ollama_client(base_url: str = "http://127.0.0.1:11434") -> OllamaClient:
+def create_ollama_client(base_url: str = OLLAMA_BASE_URL) -> OllamaClient:
     """Create a new OllamaClient instance."""
     return OllamaClient(base_url)
 

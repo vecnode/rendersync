@@ -8,14 +8,265 @@
 
 // Load workflows when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    loadWorkflows();
+    loadComfyUIWorkflows();
+    
 });
 
+
+
 // ============================================================================
+// CONNECTIONS CONSOLE FUNCTIONS
+// ============================================================================
+
+let connectionCount = 0;
+let connections = new Map();
+let currentConnectionId = null;
+let selectedWorkflow = null;
+
+// Register this page/tab as a connection when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Create unique connection ID for this tab
+    currentConnectionId = `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Get comprehensive browser and system info
+    const browserInfo = getBrowserInfo();
+    const systemInfo = getSystemInfo();
+    
+    // Register this connection with the server
+    addConnection('127.0.0.1:8080', browserInfo.name, systemInfo.platform, currentConnectionId, {
+        userAgent: navigator.userAgent,
+        screenResolution: `${screen.width}x${screen.height}`,
+        language: navigator.language,
+        machineType: systemInfo.machineType,
+        timestamp: new Date().toISOString()
+    });
+});
+
+
+
+function addConsoleEntry(message, type = 'connection-info') {
+    const consoleLog = document.getElementById('connections-log');
+    const timestamp = new Date().toLocaleTimeString();
+    
+    const entry = document.createElement('div');
+    entry.className = `console-entry ${type}`;
+    entry.innerHTML = `<span class="console-timestamp">[${timestamp}]</span>${message}`;
+    
+    consoleLog.appendChild(entry);
+    
+    // Auto-scroll to bottom
+    consoleLog.scrollTop = consoleLog.scrollHeight;
+}
+
+function addConsoleEntryWithTime(message, type = 'connection-info', customTime) {
+    const consoleLog = document.getElementById('connections-log');
+    
+    const entry = document.createElement('div');
+    entry.className = `console-entry ${type}`;
+    entry.innerHTML = `<span class="console-timestamp">[${customTime}]</span>${message}`;
+    
+    consoleLog.appendChild(entry);
+    
+    // Auto-scroll to bottom
+    consoleLog.scrollTop = consoleLog.scrollHeight;
+}
+
+function addOllamaChatEntry(message, type = 'ollama-response') {
+    const ollamaChatLog = document.getElementById('ollama-chat-log');
+    const timestamp = new Date().toLocaleTimeString();
+    
+    const entry = document.createElement('div');
+    entry.className = `ollama-chat-entry ${type}`;
+    entry.innerHTML = `<span class="ollama-chat-timestamp">[${timestamp}]</span>${message}`;
+    
+    ollamaChatLog.appendChild(entry);
+    
+    // Auto-scroll to bottom
+    ollamaChatLog.scrollTop = ollamaChatLog.scrollHeight;
+}
+
+
+async function addConnection(ip, browser, os, connectionId = null, additionalData = {}) {
+    const id = connectionId || `${ip}_${Date.now()}`;
+    
+    try {
+        // Send connection to server with all data
+        const response = await fetch('/api/connections', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                connectionId: id,
+                ip: ip,
+                browser: browser,
+                os: os,
+                timestamp: additionalData.timestamp || new Date().toISOString(),
+                userAgent: additionalData.userAgent || navigator.userAgent,
+                screenResolution: additionalData.screenResolution || `${screen.width}x${screen.height}`,
+                language: additionalData.language || navigator.language,
+                machineType: additionalData.machineType || 'Unknown'
+            })
+        });
+        
+        if (response.ok) {
+            console.log(`Connection ${id} registered with server`);
+        }
+    } catch (error) {
+        console.error('Failed to register connection with server:', error);
+    }
+}
+
+async function loadConnections() {
+    const button = document.getElementById('refresh-connections');
+    const consoleLog = document.getElementById('connections-log');
+    
+    button.disabled = true;
+    button.textContent = 'Refreshing';
+    
+    // Clear the console display
+    consoleLog.innerHTML = '';
+    
+    try {
+        // Fetch connections from server
+        const response = await fetch('/api/connections');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Display connections from server with detailed info
+            data.connections.forEach(conn => {
+                const userAgentShort = conn.userAgent.length > 50 ? 
+                    conn.userAgent.substring(0, 50) + '...' : conn.userAgent;
+                
+                const connectedTime = new Date(conn.timestamp).toLocaleTimeString();
+                const detailLine = `Active: ${conn.browser} from ${conn.ip} (${conn.os}) | UA: ${userAgentShort} | Res: ${conn.screenResolution} | Lang: ${conn.language} | Machine: ${conn.machineType}`;
+                
+                // Add entry with original connection timestamp
+                addConsoleEntryWithTime(detailLine, 'connection-success', connectedTime);
+            });
+            
+            connectionCount = data.connections.length;
+            updateConnectionCount();
+        } else {
+            addConsoleEntry('Failed to load connections from server', 'connection-error');
+        }
+    } catch (error) {
+        addConsoleEntry(`Error: ${error.message}`, 'connection-error');
+    }
+    
+    button.disabled = false;
+    button.textContent = 'Refresh Connections';
+}
+
+function getBrowserInfo() {
+    const userAgent = navigator.userAgent;
+    
+    if (userAgent.includes('Chrome') && !userAgent.includes('Edg')) {
+        return { name: 'Chrome' };
+    } else if (userAgent.includes('Firefox')) {
+        return { name: 'Firefox' };
+    } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
+        return { name: 'Safari' };
+    } else if (userAgent.includes('Edg')) {
+        return { name: 'Edge' };
+    } else if (userAgent.includes('Opera')) {
+        return { name: 'Opera' };
+    } else {
+        return { name: 'Unknown Browser' };
+    }
+}
+
+function getSystemInfo() {
+    const userAgent = navigator.userAgent;
+    const platform = navigator.platform;
+    
+    // Detect machine type
+    let machineType = 'Unknown';
+    
+    if (userAgent.includes('Windows NT 10.0')) {
+        // Check if it's Windows 11 (Windows NT 10.0 with build number >= 22000)
+        const buildMatch = userAgent.match(/Windows NT 10\.0; Win64; x64/);
+        if (buildMatch) {
+            machineType = 'Windows 11 Desktop';
+        } else {
+            machineType = 'Windows 10 Desktop';
+        }
+    } else if (userAgent.includes('Windows NT 6.3')) {
+        machineType = 'Windows 8.1 Desktop';
+    } else if (userAgent.includes('Windows NT 6.1')) {
+        machineType = 'Windows 7 Desktop';
+    } else if (userAgent.includes('Mac OS X')) {
+        machineType = 'macOS Desktop';
+    } else if (userAgent.includes('Linux')) {
+        machineType = 'Linux Desktop';
+    } else if (userAgent.includes('Android')) {
+        machineType = 'Android Mobile';
+    } else if (userAgent.includes('iPhone') || userAgent.includes('iPad')) {
+        machineType = 'iOS Mobile';
+    }
+    
+    return {
+        platform: platform,
+        machineType: machineType
+    };
+}
+
+
+
+
+function updateConnectionCount() {
+    const countElement = document.getElementById('connection-count');
+    countElement.textContent = `${connectionCount} connection${connectionCount !== 1 ? 's' : ''}`;
+}
+
+
+
+
+
+// ============================================================================
+// GLOBAL BACKEND VARIABLES
+// ============================================================================
+
+// TODO here make the outputs of these loads
+
+
+// ============================================================================
+// UI INTERACTION FUNCTIONS
+// ============================================================================
+
+function toggleTerminalRowOnTable(terminalId) {
+    const element = document.getElementById(terminalId);
+    const parentDiv = element.parentElement;
+    const button = parentDiv.querySelector('button');
+    
+    if (element.style.display === 'none' || element.style.display === '') {
+        element.style.display = 'block';
+        button.textContent = '-';
+    } else {
+        element.style.display = 'none';
+        button.textContent = '+';
+    }
+}
+
+function toggleModuleCSSBlock(moduleId) {
+    const element = document.getElementById(moduleId);
+    const button = element.previousElementSibling.querySelector('button');
+    
+    if (element.style.display === 'none') {
+        element.style.display = 'block';
+        button.textContent = '-';
+    } else {
+        element.style.display = 'none';
+        button.textContent = '+';
+    }
+}
+
 
 // ============================================================================
 // SYSTEM INFORMATION FUNCTIONS
 // ============================================================================
+
+
 
 async function loadSystemInfo() {
     try {
@@ -220,7 +471,7 @@ async function loadTerminalInfo() {
                 const terminalId = `terminal-${index}`;
                 
                 let terminalInfo = `${terminal.name} (${terminal.type}) - ${statusIcon} ${terminal.status} `;
-                terminalInfo += `<button onclick="toggleTerminal('${terminalId}')" style="font-size:10px; padding:1px 3px;">+</button><br>`;
+                terminalInfo += `<button onclick="toggleTerminalRowOnTable('${terminalId}')" style="font-size:10px; padding:1px 3px;">+</button><br>`;
                 terminalInfo += `<div id="${terminalId}" style="display:none;">`;
                 terminalInfo += `└─ PID: ${terminal.pid}<br>`;
                 terminalInfo += `└─ Description: ${terminal.description}<br>`;
@@ -259,36 +510,7 @@ async function loadTerminalInfo() {
     }
 }
 
-// ============================================================================
-// UI INTERACTION FUNCTIONS
-// ============================================================================
 
-function toggleTerminal(terminalId) {
-    const element = document.getElementById(terminalId);
-    const parentDiv = element.parentElement;
-    const button = parentDiv.querySelector('button');
-    
-    if (element.style.display === 'none' || element.style.display === '') {
-        element.style.display = 'block';
-        button.textContent = '-';
-    } else {
-        element.style.display = 'none';
-        button.textContent = '+';
-    }
-}
-
-function toggleModule(moduleId) {
-    const element = document.getElementById(moduleId);
-    const button = element.previousElementSibling.querySelector('button');
-    
-    if (element.style.display === 'none') {
-        element.style.display = 'block';
-        button.textContent = '-';
-    } else {
-        element.style.display = 'none';
-        button.textContent = '+';
-    }
-}
 
 // ============================================================================
 // PORT INSPECTION FUNCTIONS
@@ -574,35 +796,7 @@ async function pingIP() {
 }
 
 
-// ============================================================================
-// MARKDOWN RENDERING FUNCTIONS
-// ============================================================================
 
-function renderMarkdown(text) {
-    if (!text) return '';
-    
-    // Escape HTML first to prevent XSS
-    let html = text.replace(/&/g, '&amp;')
-                   .replace(/</g, '&lt;')
-                   .replace(/>/g, '&gt;');
-    
-    // Convert code blocks (```code```)
-    html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-    
-    // Convert inline code (`code`)
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-    
-    // Convert bold (**text**)
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // Convert italic (*text*)
-    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    
-    // Convert URLs to clickable links
-    html = html.replace(/(https?:\/\/[^\s<>"']+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
-    
-    return html;
-}
 
 // ============================================================================
 // OLLAMA INSPECTION FUNCTIONS
@@ -896,7 +1090,7 @@ async function queryOllama() {
     const input = document.getElementById('ollama-query-input');
     const modelSelect = document.getElementById('ollama-model-select');
     const button = document.getElementById('query-ollama');
-    const chatDiv = document.getElementById('ollama-chat');
+    const ollamaChatLog = document.getElementById('ollama-chat-log');
     
     const query = input.value.trim();
     const selectedModel = modelSelect.value;
@@ -915,16 +1109,14 @@ async function queryOllama() {
     button.disabled = true;
     button.textContent = 'Querying';
     
-    // Add user message to chat
-    const userMessage = document.createElement('div');
-    userMessage.innerHTML = `<strong>User (${selectedModel}):</strong> ${query}`;
-    chatDiv.appendChild(userMessage);
+    // Add user message to chat with timestamp
+    addOllamaChatEntry(`User: ${query}`, 'user-message');
     
     // Clear input
     input.value = '';
     
     // Scroll to bottom
-    chatDiv.scrollTop = chatDiv.scrollHeight;
+    ollamaChatLog.scrollTop = ollamaChatLog.scrollHeight;
     
     try {
         const response = await fetch('/api/ollama-chat', {
@@ -942,29 +1134,23 @@ async function queryOllama() {
         const data = await response.json();
         
         // Add Ollama response to chat
-        const ollamaMessage = document.createElement('div');
-        
         if (data.success) {
-            ollamaMessage.innerHTML = `<strong>Ollama:</strong> ${renderMarkdown(data.response)}`;
+            addOllamaChatEntry(`${selectedModel}: ${data.response}`, 'ollama-response');
         } else {
-            ollamaMessage.innerHTML = `<strong>Ollama:</strong> Error: ${data.error}`;
+            addOllamaChatEntry(`${selectedModel}: Error: ${data.error}`, 'error-message');
         }
-        
-        chatDiv.appendChild(ollamaMessage);
         
         
     } catch (error) {
         // Add error message to chat
-        const errorMessage = document.createElement('div');
-        errorMessage.innerHTML = `Error: ${error.message}`;
-        chatDiv.appendChild(errorMessage);
+        addOllamaChatEntry(`Error: ${error.message}`, 'error-message');
         
     } finally {
         button.disabled = false;
         button.textContent = 'Query ollama';
         
         // Scroll to bottom
-        chatDiv.scrollTop = chatDiv.scrollHeight;
+        ollamaChatLog.scrollTop = ollamaChatLog.scrollHeight;
     }
 }
 
@@ -999,7 +1185,7 @@ async function loadAppsRunningInfo() {
                 const appId = `app-${index}`;
                 
                 let appInfo = `${app.name} (${app.type}) - ${statusIcon} ${app.status} `;
-                appInfo += `<button onclick="toggleApp('${appId}')" style="font-size:10px; padding:1px 3px;">+</button><br>`;
+                appInfo += `<button onclick="toggleButtonRunningAppAbout('${appId}')" style="font-size:10px; padding:1px 3px;">+</button><br>`;
                 appInfo += `<div id="${appId}" style="display:none;">`;
                 appInfo += `└─ PID: ${app.pid}<br>`;
                 appInfo += `└─ Description: ${app.description}<br>`;
@@ -1040,7 +1226,7 @@ async function loadAppsRunningInfo() {
     }
 }
 
-function toggleApp(appId) {
+function toggleButtonRunningAppAbout(appId) {
     const element = document.getElementById(appId);
     const parentDiv = element.parentElement;
     const button = parentDiv.querySelector('button');
@@ -1303,115 +1489,13 @@ async function startComfyUI() {
     }
 }
 
-// ============================================================================
-// CONNECTIONS CONSOLE FUNCTIONS
-// ============================================================================
 
-let connectionCount = 0;
-let connections = new Map();
-
-function loadConnections() {
-    const button = document.getElementById('refresh-connections');
-    const status = document.getElementById('core-status');
-    
-    button.disabled = true;
-    button.textContent = 'Refreshing...';
-    status.textContent = 'Loading connection data...';
-    
-    // Simulate loading connections (in a real implementation, this would fetch from the server)
-    setTimeout(() => {
-        addConsoleEntry('Refreshing connection list...', 'connection-info');
-        
-        // Add some sample connections for demonstration
-        if (connectionCount === 0) {
-            addConnection('127.0.0.1:8080', 'Chrome', 'Windows 11');
-            addConnection('127.0.0.1:8081', 'Edge', 'Windows 11');
-        }
-        
-        updateConnectionCount();
-        status.textContent = `Active: ${connectionCount} connections`;
-        
-        button.disabled = false;
-        button.textContent = 'Refresh Connections';
-    }, 1000);
-}
-
-function addConnection(ip, browser, os) {
-    const connectionId = `${ip}_${Date.now()}`;
-    connections.set(connectionId, {
-        ip: ip,
-        browser: browser,
-        os: os,
-        timestamp: new Date(),
-        status: 'active'
-    });
-    
-    connectionCount++;
-    addConsoleEntry(`New connection: ${browser} from ${ip} (${os})`, 'connection-new');
-}
-
-function removeConnection(connectionId) {
-    if (connections.has(connectionId)) {
-        const conn = connections.get(connectionId);
-        connections.delete(connectionId);
-        connectionCount--;
-        addConsoleEntry(`Connection lost: ${conn.browser} from ${conn.ip}`, 'connection-lost');
-    }
-}
-
-function addConsoleEntry(message, type = 'connection-info') {
-    const consoleLog = document.getElementById('connections-log');
-    const timestamp = new Date().toLocaleTimeString();
-    
-    const entry = document.createElement('div');
-    entry.className = `console-entry ${type}`;
-    entry.innerHTML = `<span class="console-timestamp">[${timestamp}]</span>${message}`;
-    
-    consoleLog.appendChild(entry);
-    
-    // Auto-scroll to bottom
-    consoleLog.scrollTop = consoleLog.scrollHeight;
-}
-
-function clearConnections() {
-    const consoleLog = document.getElementById('connections-log');
-    consoleLog.innerHTML = '<div class="console-entry">Console cleared. Waiting for connections</div>';
-    
-    connections.clear();
-    connectionCount = 0;
-    updateConnectionCount();
-    
-    const status = document.getElementById('core-status');
-    status.textContent = 'Console cleared';
-}
-
-function updateConnectionCount() {
-    const countElement = document.getElementById('connection-count');
-    countElement.textContent = `${connectionCount} connection${connectionCount !== 1 ? 's' : ''}`;
-}
-
-// Simulate periodic connection updates
-function startConnectionMonitoring() {
-    setInterval(() => {
-        // In a real implementation, this would check actual server connections
-        // For now, we'll just update the status
-        const status = document.getElementById('core-status');
-        if (status.textContent.includes('Initializing')) {
-            status.textContent = `Monitoring ${connectionCount} connections`;
-        }
-    }, 5000);
-}
-
-// Initialize connection monitoring when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    startConnectionMonitoring();
-});
 
 // ============================================================================
-// WORKFLOW MANAGEMENT FUNCTIONS
+// COMFYUI WORKFLOW MANAGEMENT FUNCTIONS
 // ============================================================================
 
-async function loadWorkflows() {
+async function loadComfyUIWorkflows() {
     try {
         const response = await fetch('/api/workflows');
         const data = await response.json();
@@ -1419,15 +1503,22 @@ async function loadWorkflows() {
         const workflowList = document.getElementById('workflow-list');
         
         if (data.success && data.workflows.length > 0) {
-            workflowList.innerHTML = data.workflows.map(workflow => `
-                <div style="padding: 8px; border: 1px solid black; border-radius: 4px; margin-bottom: 8px; background: #f9f9f9; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="color: #333;">${workflow.filename}</div>
-                    <div style="display: flex; gap: 8px;">
-                        <button onclick="showWorkflowInfo('${workflow.filename}')" style="padding: 4px 8px; font-size: 12px; background: #e9ecef; border: 1px solid black; border-radius: 3px;">Info</button>
-                        <button onclick="selectWorkflow('${workflow.filename}')" style="padding: 4px 8px; font-size: 12px; background: #e9ecef; border: 1px solid black; border-radius: 3px;">Select</button>
+            workflowList.innerHTML = data.workflows.map(workflow => {
+                const isSelected = selectedWorkflow === workflow.filename;
+                const buttonStyle = isSelected 
+                    ? 'padding: 4px 8px; font-size: 12px; background: #5a6268 !important; color: white !important; border: 1px solid black; border-radius: 3px;'
+                    : 'padding: 4px 8px; font-size: 12px; background: #e9ecef !important; color: inherit !important; border: 1px solid black; border-radius: 3px;';
+                const buttonText = isSelected ? 'Selected' : 'Select';
+                
+                return `
+                    <div style="padding: 8px; border: 1px solid black; border-radius: 4px; margin-bottom: 8px; background: #f9f9f9; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="color: #333;">${workflow.filename}</div>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="selectComfyUIWorkflowButton('${workflow.filename}')" style="${buttonStyle}">${buttonText}</button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         } else {
             workflowList.innerHTML = '<div style="color: #888; font-size: 12px;">No workflows found</div>';
         }
@@ -1437,11 +1528,26 @@ async function loadWorkflows() {
     }
 }
 
-function openWorkflowDialog() {
-    document.getElementById('workflow-file-input').click();
+
+
+function selectComfyUIWorkflowButton(filename) {
+    // Toggle selection - if already selected, deselect; otherwise select
+    if (selectedWorkflow === filename) {
+        selectedWorkflow = null;
+    } else {
+        selectedWorkflow = filename;
+    }
+    
+    // Reload the workflow list to update button states
+    loadComfyUIWorkflows();
 }
 
-async function uploadWorkflow() {
+function openComfyUIWorkflowDialog() {
+    document.getElementById('workflow-file-input').click();
+    console.log("REVIEW THIS")
+}
+
+async function uploadComfyUIWorkflow() {
     const fileInput = document.getElementById('workflow-file-input');
     const file = fileInput.files[0];
     
@@ -1492,7 +1598,7 @@ async function uploadWorkflow() {
                 }
             }, 3000);
             
-            loadWorkflows(); // Refresh the list
+            loadComfyUIWorkflows(); // Refresh the list
         } else {
             alert(`Upload failed: ${data.detail || 'Unknown error'}`);
         }
@@ -1505,46 +1611,10 @@ async function uploadWorkflow() {
     fileInput.value = '';
 }
 
-function selectWorkflow(filename) {
-    const workflowList = document.getElementById('workflow-list');
-    const buttons = workflowList.querySelectorAll('button');
-    
-    // Check if this workflow is already selected
-    const isCurrentlySelected = window.selectedWorkflow === filename;
-    
-    if (isCurrentlySelected) {
-        // Deselect - clear selection
-        window.selectedWorkflow = null;
-        buttons.forEach(btn => {
-            btn.textContent = 'Select';
-            btn.style.background = '#e9ecef';
-            btn.style.color = '#000';
-            btn.style.border = '1px solid #ccc';
-        });
-        console.log('Deselected workflow');
-    } else {
-        // Select this workflow - deselect all others first
-        window.selectedWorkflow = filename;
-        buttons.forEach(btn => {
-            btn.textContent = 'Select';
-            btn.style.background = '#e9ecef';
-            btn.style.color = '#000';
-            btn.style.border = '1px solid #ccc';
-        });
-        
-        // Highlight the selected one with green
-        event.target.textContent = 'Selected';
-        event.target.style.background = '#28a745'; // Green
-        event.target.style.color = 'white';
-        event.target.style.border = '1px solid #28a745';
-        
-        console.log(`Selected workflow: ${filename}`);
-    }
-}
 
 // ============================================================================
 
-async function submitWorkflow() {
+async function submitComfyUIWorkflow() {
     const button = document.getElementById('submit-workflow');
     const rows = document.getElementById('comfyui-action-rows');
     
@@ -1624,133 +1694,11 @@ async function submitWorkflow() {
     }
 }
 
-// ============================================================================
-// WORKFLOW INFO MODAL FUNCTIONS
-// ============================================================================
 
-async function showWorkflowInfo(filename) {
-    try {
-        // Show loading state
-        const modal = document.getElementById('workflow-info-modal');
-        const modalTitle = document.getElementById('modal-title');
-        const modalBody = document.getElementById('modal-body');
-        
-        modalTitle.textContent = `Workflow Information: ${filename}`;
-        modalBody.innerHTML = '<div style="text-align: center; padding: 20px;">Loading workflow information...</div>';
-        modal.style.display = 'flex';
-        
-        // Fetch workflow data
-        const response = await fetch(`/workflows/${filename}`);
-        if (!response.ok) {
-            throw new Error(`Failed to load workflow: ${response.status}`);
-        }
-        
-        const workflowData = await response.json();
-        
-        // Extract and format workflow information
-        const info = extractWorkflowInfo(workflowData);
-        
-        // Display the information
-        modalBody.innerHTML = formatWorkflowInfo(info);
-        
-    } catch (error) {
-        console.error('Failed to load workflow info:', error);
-        const modalBody = document.getElementById('modal-body');
-        modalBody.innerHTML = `<div style="color: red; padding: 20px;">Error loading workflow information: ${error.message}</div>`;
-    }
-}
 
-function extractWorkflowInfo(workflowData) {
-    const info = {
-        filename: 'Unknown',
-        nodes: [],
-        models: [],
-        general: {}
-    };
-    
-    // Extract general information
-    if (workflowData.id) info.general.id = workflowData.id;
-    if (workflowData.version) info.general.version = workflowData.version;
-    if (workflowData.last_node_id) info.general.lastNodeId = workflowData.last_node_id;
-    if (workflowData.last_link_id) info.general.lastLinkId = workflowData.last_link_id;
-    
-    // Extract node information
-    if (workflowData.nodes && Array.isArray(workflowData.nodes)) {
-        info.nodes = workflowData.nodes.map(node => ({
-            id: node.id,
-            type: node.type,
-            name: node.properties?.['Node name for S&R'] || node.type,
-            inputs: node.inputs?.length || 0,
-            outputs: node.outputs?.length || 0,
-            widgets: node.widgets_values || []
-        }));
-    }
-    
-    // Extract model information
-    if (workflowData.nodes && Array.isArray(workflowData.nodes)) {
-        workflowData.nodes.forEach(node => {
-            if (node.type === 'CheckpointLoaderSimple' && node.properties?.models) {
-                node.properties.models.forEach(model => {
-                    info.models.push({
-                        name: model.name,
-                        url: model.url,
-                        directory: model.directory
-                    });
-                });
-            }
-        });
-    }
-    
-    return info;
-}
 
-function formatWorkflowInfo(info) {
-    let html = '<div>';
-    
-    // General Information
-    html += '<h4>General Information</h4>';
-    html += '<ul>';
-    if (info.general.id) html += `<li><strong>ID:</strong> <code>${info.general.id}</code></li>`;
-    if (info.general.version) html += `<li><strong>Version:</strong> ${info.general.version}</li>`;
-    if (info.general.lastNodeId) html += `<li><strong>Last Node ID:</strong> ${info.general.lastNodeId}</li>`;
-    if (info.general.lastLinkId) html += `<li><strong>Last Link ID:</strong> ${info.general.lastLinkId}</li>`;
-    html += '</ul>';
-    
-    // Models
-    if (info.models.length > 0) {
-        html += '<h4>Models</h4>';
-        html += '<ul>';
-        info.models.forEach(model => {
-            html += `<li><strong>${model.name}</strong>`;
-            if (model.directory) html += ` (${model.directory})`;
-            html += '</li>';
-        });
-        html += '</ul>';
-    }
-    
-    // Nodes
-    if (info.nodes.length > 0) {
-        html += '<h4>Nodes</h4>';
-        html += '<ul>';
-        info.nodes.forEach(node => {
-            html += `<li><strong>${node.name}</strong> (ID: ${node.id})`;
-            html += `<br><small>Type: <code>${node.type}</code> | Inputs: ${node.inputs} | Outputs: ${node.outputs}</small>`;
-            if (node.widgets && node.widgets.length > 0) {
-                html += `<br><small>Widgets: ${node.widgets.join(', ')}</small>`;
-            }
-            html += '</li>';
-        });
-        html += '</ul>';
-    }
-    
-    html += '</div>';
-    return html;
-}
 
-function closeWorkflowInfo() {
-    const modal = document.getElementById('workflow-info-modal');
-    modal.style.display = 'none';
-}
+
 
 
 // ============================================================================

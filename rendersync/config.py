@@ -1,12 +1,13 @@
 import os
 
+# TODO ComfyUI configs
+
 # Default Ollama HTTP endpoint
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 # Choose a small, efficient default model. Override with OLLAMA_MODEL env var.
-DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
+OLLAMA_DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
 
-# Sensible generation defaults for command/tool use-cases
-GENERATION_OPTIONS = {
+OLLAMA_GENERATION_OPTIONS = {
     "temperature": float(os.getenv("OLLAMA_TEMPERATURE", "0.2")),
     "top_p": float(os.getenv("OLLAMA_TOP_P", "0.9")),
     "top_k": int(os.getenv("OLLAMA_TOP_K", "40")),

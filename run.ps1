@@ -1,12 +1,12 @@
 # rendersync
 # ================================================================================
-# Main launcher script - handles venv setup and FastAPI server startup
-# This script creates venv if missing, installs requirements, and starts the server
+# Main launcher script - handles .venv setup and FastAPI server startup
+# This script creates .venv if missing, installs requirements, and starts the server
 # ================================================================================
 
 $ErrorActionPreference = "Stop"
 
-# Color functions for better UX
+# Color functions
 function Write-Info { param($msg) Write-Host "==> $msg" -ForegroundColor Cyan }
 function Write-Success { param($msg) Write-Host "==> $msg" -ForegroundColor Green }
 function Write-Warning { param($msg) Write-Host "==> $msg" -ForegroundColor Yellow }
@@ -88,13 +88,13 @@ try {
 }
 
 # Check if venv exists, create if missing
-$venvActivate = "$projectRoot\venv\Scripts\Activate.ps1"
+$venvActivate = "$projectRoot\.venv\Scripts\Activate.ps1"
 if (-Not (Test-Path $venvActivate)) {
-    Write-Info "Virtual environment not found. Creating venv"
+    Write-Info "Virtual environment not found. Creating .venv"
     
     # Create virtual environment
     Write-Info "Creating Python virtual environment"
-    python -m venv "$projectRoot\venv"
+    python -m venv "$projectRoot\.venv"
     
     if (-Not (Test-Path $venvActivate)) {
         Write-Error "Failed to create virtual environment"
@@ -106,7 +106,13 @@ if (-Not (Test-Path $venvActivate)) {
     # Activate venv and install requirements
     Write-Info "Activating virtual environment and installing requirements"
     & $venvActivate
-    pip install --upgrade pip
+    
+    # Upgrade pip first using the recommended method
+    Write-Info "Upgrading pip to latest version"
+    python -m pip install --upgrade pip
+    
+    # Install requirements
+    Write-Info "Installing project requirements"
     pip install -r "$projectRoot\requirements.txt"
     
     Write-Success "Virtual environment created and requirements installed"
@@ -185,3 +191,5 @@ do {
         }
     }
 } while ($true)
+
+

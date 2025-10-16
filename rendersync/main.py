@@ -36,6 +36,7 @@ from .modules.utilities import track_spawned_process, check_application_timeout,
 from .modules.ollama import OllamaManager, OllamaClient
 from .modules.comfyui import ComfyUIManager
 from .comfy_api import ComfyUIClient, load_workflow_from_file
+from .config import OLLAMA_BASE_URL
 
 
 # ================================================================================
@@ -211,6 +212,13 @@ def get_port_info():
     
     return info
 
+
+# ============================================================================
+# CONNECTION TRACKING
+# ============================================================================
+# Global Browser connection tracking
+
+active_connections = {}
 
 # ============================================================================
 # FASTAPI APPLICATION
@@ -408,7 +416,7 @@ async def ollama_status():
         # If running, try to get more details
         if result["running"]:
             try:
-                client = OllamaClient("http://127.0.0.1:11434")
+                client = OllamaClient(OLLAMA_BASE_URL)
                 health = await client.health()
                 result["api_responding"] = health
             except Exception as e:
@@ -460,17 +468,78 @@ async def ollama_models():
         raise HTTPException(status_code=500, detail=f"Failed to get Ollama models: {str(e)}")
 
 
+@app.post("/api/connections")
+async def register_connection(request: dict):
+    """Register a new browser connection."""
+    try:
+        connection_id = request.get("connectionId")
+        ip = request.get("ip")
+        browser = request.get("browser")
+        os = request.get("os")
+        timestamp = request.get("timestamp")
+        user_agent = request.get("userAgent")
+        screen_resolution = request.get("screenResolution")
+        language = request.get("language")
+        machine_type = request.get("machineType")
+        
+        if not all([connection_id, ip, browser, os]):
+            raise HTTPException(status_code=400, detail="Missing required connection data")
+        
+        # Store connection globally with all details
+        active_connections[connection_id] = {
+            "ip": ip,
+            "browser": browser,
+            "os": os,
+            "timestamp": timestamp,
+            "userAgent": user_agent,
+            "screenResolution": screen_resolution,
+            "language": language,
+            "machineType": machine_type,
+            "status": "active"
+        }
+        
+        return {"success": True, "message": f"Connection {connection_id} registered"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to register connection: {str(e)}")
+
+@app.get("/api/connections")
+async def get_connections():
+    """Get all active connections."""
+    try:
+        connections = []
+        for conn_id, conn_data in active_connections.items():
+            if conn_data["status"] == "active":
+                connections.append({
+                    "connectionId": conn_id,
+                    "ip": conn_data["ip"],
+                    "browser": conn_data["browser"],
+                    "os": conn_data["os"],
+                    "timestamp": conn_data["timestamp"],
+                    "userAgent": conn_data.get("userAgent", ""),
+                    "screenResolution": conn_data.get("screenResolution", ""),
+                    "language": conn_data.get("language", ""),
+                    "machineType": conn_data.get("machineType", "Unknown")
+                })
+        
+        return {"success": True, "connections": connections}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get connections: {str(e)}")
+
 @app.post("/api/ollama-chat")
 async def ollama_chat(request: dict):
-    # Ollama chat: takes message text, sends to Ollama API and returns AI response
+    # Ollama chat: takes message text and model, sends to Ollama API and returns AI response
     """Send a chat message to Ollama."""
     try:
         message = request.get("message", "").strip()
+        model = request.get("model", "").strip()
+        
         if not message:
             raise HTTPException(status_code=400, detail="Message cannot be empty")
         
-        client = OllamaClient("http://127.0.0.1:11434")
-        result = await client.simple_chat(message)
+        client = OllamaClient(OLLAMA_BASE_URL)
+        result = await client.simple_chat(message, model)
         return result
         
     except Exception as e:
