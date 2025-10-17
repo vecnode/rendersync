@@ -139,7 +139,7 @@ async function loadConnections() {
                     conn.userAgent.substring(0, 50) + '...' : conn.userAgent;
                 
                 const connectedTime = new Date(conn.timestamp).toLocaleTimeString();
-                const detailLine = `Active: ${conn.browser} from ${conn.ip} (${conn.os}) | UA: ${userAgentShort} | Res: ${conn.screenResolution} | Lang: ${conn.language} | Machine: ${conn.machineType}`;
+                const detailLine = `Client: ${conn.browser} from ${conn.ip} (${conn.os}) | UA: ${userAgentShort} | Res: ${conn.screenResolution} | Lang: ${conn.language} | Machine: ${conn.machineType}`;
                 
                 // Add entry with original connection timestamp
                 addConsoleEntryWithTime(detailLine, 'connection-success', connectedTime);
@@ -248,18 +248,6 @@ function toggleTerminalRowOnTable(terminalId) {
     }
 }
 
-function toggleModuleCSSBlock(moduleId) {
-    const element = document.getElementById(moduleId);
-    const button = element.previousElementSibling.querySelector('button');
-    
-    if (element.style.display === 'none') {
-        element.style.display = 'block';
-        button.textContent = '-';
-    } else {
-        element.style.display = 'none';
-        button.textContent = '+';
-    }
-}
 
 
 // ============================================================================
@@ -1500,31 +1488,27 @@ async function loadComfyUIWorkflows() {
         const response = await fetch('/api/workflows');
         const data = await response.json();
         
-        const workflowList = document.getElementById('workflow-list');
+        const workflowRows = document.getElementById('workflow-rows');
         
         if (data.success && data.workflows.length > 0) {
-            workflowList.innerHTML = data.workflows.map(workflow => {
+            workflowRows.innerHTML = data.workflows.map(workflow => {
                 const isSelected = selectedWorkflow === workflow.filename;
                 const buttonStyle = isSelected 
                     ? 'padding: 4px 8px; font-size: 12px; background: #5a6268 !important; color: white !important; border: 1px solid black; border-radius: 3px;'
                     : 'padding: 4px 8px; font-size: 12px; background: #e9ecef !important; color: inherit !important; border: 1px solid black; border-radius: 3px;';
                 const buttonText = isSelected ? 'Selected' : 'Select';
                 
-                return `
-                    <div style="padding: 8px; border: 1px solid black; border-radius: 4px; margin-bottom: 8px; background: #f9f9f9; display: flex; justify-content: space-between; align-items: center;">
-                        <div style="color: #333;">${workflow.filename}</div>
-                        <div style="display: flex; gap: 8px;">
-                            <button onclick="selectComfyUIWorkflowButton('${workflow.filename}')" style="${buttonStyle}">${buttonText}</button>
-                        </div>
-                    </div>
-                `;
+                return `<tr>
+                    <td>${workflow.filename}</td>
+                    <td><button onclick="selectComfyUIWorkflowButton('${workflow.filename}')" style="${buttonStyle}">${buttonText}</button></td>
+                </tr>`;
             }).join('');
         } else {
-            workflowList.innerHTML = '<div style="color: #888; font-size: 12px;">No workflows found</div>';
+            workflowRows.innerHTML = '<tr><td colspan="2">No workflows found</td></tr>';
         }
     } catch (error) {
         console.error('Failed to load workflows:', error);
-        document.getElementById('workflow-list').innerHTML = '<div font-size: 12px;">Failed to load workflows</div>';
+        document.getElementById('workflow-rows').innerHTML = '<tr><td colspan="2">Failed to load workflows</td></tr>';
     }
 }
 
@@ -1542,10 +1526,8 @@ function selectComfyUIWorkflowButton(filename) {
     loadComfyUIWorkflows();
 }
 
-function openComfyUIWorkflowDialog() {
-    document.getElementById('workflow-file-input').click();
-    console.log("REVIEW THIS")
-}
+
+
 
 async function uploadComfyUIWorkflow() {
     const fileInput = document.getElementById('workflow-file-input');
@@ -1571,30 +1553,23 @@ async function uploadComfyUIWorkflow() {
         
         if (data.success) {
             // Show green success message
-            const workflowList = document.getElementById('workflow-list');
-            const successDiv = document.createElement('div');
-            successDiv.style.color = '#155724'; // Dark green text
-            successDiv.style.fontSize = '12px';
-            successDiv.style.marginTop = '10px';
-            successDiv.style.padding = '8px';
-            successDiv.style.border = '1px solid #28a745';
-            successDiv.style.borderRadius = '4px';
-            successDiv.style.background = '#d4edda';
-            successDiv.textContent = `✅ Workflow '${data.filename}' uploaded successfully!`;
+            const workflowRows = document.getElementById('workflow-rows');
+            const successRow = document.createElement('tr');
+            successRow.className = 'upload-message';
+            successRow.innerHTML = `<td colspan="2" style="color: #155724; background: #d4edda; border: 1px solid #28a745; padding: 8px; text-align: center;">Workflow '${data.filename}' uploaded successfully!</td>`;
             
             // Remove any existing messages
-            const existingMessage = workflowList.querySelector('.upload-message');
+            const existingMessage = workflowRows.querySelector('.upload-message');
             if (existingMessage) {
                 existingMessage.remove();
             }
             
-            successDiv.className = 'upload-message';
-            workflowList.appendChild(successDiv);
+            workflowRows.appendChild(successRow);
             
             // Remove message after 3 seconds
             setTimeout(() => {
-                if (successDiv.parentNode) {
-                    successDiv.remove();
+                if (successRow.parentNode) {
+                    successRow.remove();
                 }
             }, 3000);
             

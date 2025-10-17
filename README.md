@@ -17,16 +17,20 @@ git (e.g. version 2.51.0.windows.1)
 
 ### Libraries:  
 ```
-fastapi>=0.115.0  
-uvicorn[standard]>=0.30.0  
-httpx>=0.27.0  
-pydantic>=2.7.0  
-psutil>=5.9.8  
+# Python
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+httpx>=0.27.0
+pydantic>=2.7.0
+psutil>=5.9.8
+python-multipart
+# JavaScript
+bootstrap==5.3.8
 ```
 
 ### Module Libraries: 
 ```
-ollama (e.g. version 0.11.8)   
+Ollama (e.g. version 0.11.8)   
 ComfyUI (e.g. version 0.3.64)  
 ```
 
@@ -44,7 +48,7 @@ ComfyUI (e.g. version 0.3.64)
     - Independent terminals for submodules
 - Modules
     - Host OS inspector, terminals, PID, IPs, network utilities  
-    - Modules: `interaction.py`, `network.py`, `system.py`, `ollama.py`, `comfyui.py`, `utilities.py`
+    - Modules: `comfyui.py`, `network.py`,  `ollama.py`, `system.py`, `utilities.py`
 - Submodules
     - Ollama: Inspect, Start/Stop, chat with models  
     - ComfyUI: Inspect, Start/Stop, submit example workflow
@@ -67,6 +71,7 @@ ollama list
 
 - Test calling renders from secondary `rendersync` to a machine with 24Gb and call SD1.5    
 - Add a global open/close of endpoints.   
+- Add timings to execute on clock and checking if process if on first - safe.    
 - Add trainer file as module - fine-tuning stack to see.    
 - Get the progress bar from the models generating on comfy terminal to the browser.   
 - Check more Host OSs, multiple machines.   

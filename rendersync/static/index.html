@@ -6,18 +6,28 @@
     <title>rendersync</title>
     <link rel="icon" href="data:image/svg+xml,<svg viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
     <link rel="stylesheet" href="/static/styles.css">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>    
     <script src="/static/script.js"></script>
+
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <p>rendersync</p>
+    <nav class="navbar navbar-top">
+        <div class="navbar-brand">
+            rendersync
         </div>
+    </nav>
+
+    
+    
+    <div class="container">
 
         <div class="module">
-            <p><button onclick="toggleModuleCSSBlock('core-module')" class="module-collapse-btn">-</button>(core module)</p>
-            <div id="core-module">
-                <br>
+            <p><button class="btn btn-link module-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#core-module" aria-expanded="false" aria-controls="core-module"></button>(core module)</p>
+            <div class="collapse" id="core-module">
+                
+                <hr style="width: 100%; border: 2px solid black !important; margin: 0 0 15px 0;">
                 <button id="refresh-connections" onclick="loadConnections()">Refresh Connections</button>
                 
                 <div id="connections-console" class="connections-console">
@@ -26,21 +36,12 @@
                         <span id="connection-count">0 connections</span>
                     </div>
                     <div id="connections-log" class="console-log"></div>
-                </div>
+                </div>    
+
+                <br>
                 
-                <br>
-            </div>
-        </div>
 
-        <div class="module">
-            <p><button onclick="toggleModuleCSSBlock('network-module')" class="module-collapse-btn">-</button>(network module)</p>
-            <div id="network-module">
-                <br>
                 <button id="refresh-system-info" onclick="loadSystemInfo()">Get System Info</button>
-                <button id="refresh-network-info" onclick="loadNetworkInfo()">Get Network Info</button>
-                <button id="refresh-terminal-info" onclick="loadTerminalInfo()">Get Terminal Info</button>
-                <button id="refresh-apps-running-info" onclick="loadAppsRunningInfo()">Apps Running Info</button>
-
                 <table class="system-table">
                     <thead>
                         <tr>
@@ -51,16 +52,11 @@
                     <tbody id="system-info-rows">
                     </tbody>
                 </table>
-                <table class="network-table">
-                    <thead>
-                        <tr>
-                            <th>Property</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="network-info-rows">
-                    </tbody>
-                </table>
+
+                <br>
+
+                <button id="refresh-terminal-info" onclick="loadTerminalInfo()">Get Terminal Info</button>
+
                 <table class="system-table">
                     <thead>
                         <tr>
@@ -71,6 +67,10 @@
                     <tbody id="terminal-info-rows">
                     </tbody>
                 </table>
+
+                <br>
+
+                <button id="refresh-apps-running-info" onclick="loadAppsRunningInfo()">Get Apps Running</button>
                 <table class="system-table">
                     <thead>
                         <tr>
@@ -81,6 +81,25 @@
                     <tbody id="apps-running-info-rows">
                     </tbody>
                 </table>
+
+                <br>
+    
+                <button id="refresh-network-info" onclick="loadNetworkInfo()">Get Network Info</button>
+                
+
+                
+                <table class="network-table">
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="network-info-rows">
+                    </tbody>
+                </table>
+                
+                
                 
                 <br>
                 <input type="number" id="port-input" placeholder="(1-65535)" min="1" max="65535"">
@@ -125,152 +144,149 @@
                 <br>
 
             </div>
-        
-            
-            
-        
         </div>
 
-        <div class="module">
-            <p><button onclick="toggleModuleCSSBlock('inference-module')" class="module-collapse-btn">-</button>(inference module)</p>
-            <div id="inference-module">
-                <br>
-                <div class="submodule">
-                    <p><button onclick="toggleModuleCSSBlock('ollama-submodule')" class="module-collapse-btn">-</button>(submodule ollama)</p>
-                    <div id="ollama-submodule">
-                    <br>
-                    <button id="inspect-ollama" onclick="inspectOllama()">Inspect ollama</button>
-                    <table class="system-table">
-                        <thead>
-                            <tr>
-                                <th>Property</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ollama-info-rows">
-                        </tbody>
-                    </table>
+        
+        
 
-                    <br>
-
-                    <button id="start-ollama" onclick="startOllama()">Start ollama</button>
-                    <button id="stop-ollama" onclick="stopOllama()">Stop ollama</button>
-                    <button id="get-models" onclick="getOllamaModels()">Get ollama Models</button>
-
-                    <table class="system-table">
-                        <thead>
-                            <tr>
-                                <th>Property</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ollama-action-rows">
-                        </tbody>
-                    </table>
-
-                    <br>
-                    <input type="text" id="ollama-query-input" placeholder="Enter your question for Ollama" style="width: 300px;">
-                    <select id="ollama-model-select" style="margin-right: 10px; width: 200px;">
-                        <option value="">Select Model</option>
-                    </select>
-                    <button id="query-ollama" onclick="queryOllama()">Query ollama</button>
-                    
-                    <div id="ollama-chat" class="ollama-chat">
-                        <div class="ollama-chat-header">
-                            Ollama Chat Console
-                        </div>
-                        <div id="ollama-chat-log" class="ollama-chat-log"></div>
-                    </div>
-                    </div>
-                </div>
-
-                <br>
-
-                <div class="submodule">
-                    <p><button onclick="toggleModuleCSSBlock('comfyui-submodule')" class="module-collapse-btn">-</button>(submodule ComfyUI)</p>
-                    <div id="comfyui-submodule">
-                    <br>
-                    <button id="inspect-comfyui" onclick="inspectComfyUI()">Inspect ComfyUI</button>
-                    <table class="system-table">
-                        <thead>
-                            <tr>
-                                <th>Property</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody id="comfyui-info-rows">
-                        </tbody>
-                    </table>
-
-                    <br>
-
-                    <button id="start-comfyui" onclick="startComfyUI()">Start ComfyUI</button>
-                    <button id="stop-comfyui" onclick="stopComfyUI()">Stop ALL ComfyUI</button>
-                    
-
-                    
-
-                    <button id="inspect-comfyui" onclick="inspectComfyUI()">Inspect ComfyUI</button>
-                    <br><br>
-
-                    (submit ComfyUI renders) <br>
-
-                    <table class="system-table">
-                        <thead>
-                            <tr>
-                                <th>Property</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody id="comfyui-action-rows">
-                        </tbody>
-                    </table>
-
-                    <br>
-
-                    <div class="submodule">
-                        
-
-                        (text-to-image, Stable Diffusion v1.5, SD 1.5) <br><br>
-
-                        <div id="workflow-list" style="margin-bottom: 15px;">
-                            <div style="color: #888; font-size: 12px;">Loading workflows</div>
-                        </div>
-
-                        
-                        
-                        <button id="open-workflow-btn" onclick="openComfyUIWorkflowDialog()" style="margin-bottom: 15px;">Open Workflow</button>
-                        <input type="file" id="workflow-file-input" accept=".json" style="display: none;" onchange="uploadComfyUIWorkflow()">
-                        <br>
-                        <input type="number" id="seed-input" placeholder="Enter seed" min="0" max="999999999999999" style="width: 250px;">
-                        <button id="submit-workflow" onclick="submitComfyUIWorkflow()">Submit Workflow</button>
-                    </div>
-
-
-                    
-
-                    
-                    
-                    </div>
-                </div>
-
-                <br>
                 
-            </div>
-        </div>
-
-        <div class="module">
-            <p><button onclick="toggleModuleCSSBlock('training-module')" class="module-collapse-btn">-</button>(training module)</p>
-            <div id="training-module">
-                <br><br>
-            </div>
-        </div>
+        
 
         
+        <div class="module">
+            <p><button class="btn btn-link module-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#ollama-submodule" aria-expanded="false" aria-controls="ollama-submodule"></button>(ollama module)</p>
+            <div class="collapse" id="ollama-submodule">
+                <hr style="width: 100%; border: 2px solid black !important; margin: 0 0 15px 0;">
+
+                <button id="inspect-ollama" onclick="inspectOllama()">Inspect ollama</button>
+                <table class="system-table">
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ollama-info-rows">
+                    </tbody>
+                </table>
+
+                <br>
+
+                <button id="start-ollama" onclick="startOllama()">Start ollama</button>
+                <button id="stop-ollama" onclick="stopOllama()">Stop ollama</button>
+                <button id="get-models" onclick="getOllamaModels()">Get ollama Models</button>
+
+                <table class="system-table">
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ollama-action-rows">
+                    </tbody>
+                </table>
+
+                <br>
+                <input type="text" id="ollama-query-input" placeholder="Enter your question for Ollama" style="width: 300px;">
+                <select id="ollama-model-select" style="margin-right: 10px; width: 200px;">
+                    <option value="">Select Model</option>
+                </select>
+                <button id="query-ollama" onclick="queryOllama()">Query ollama</button>
+                
+                <div id="ollama-chat" class="ollama-chat">
+                    <div class="ollama-chat-header">
+                        Ollama Console
+                    </div>
+                    <div id="ollama-chat-log" class="ollama-chat-log"></div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="module">
+            <p><button class="btn btn-link module-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#comfyui-submodule" aria-expanded="false" aria-controls="comfyui-submodule"></button>(comfyui module)</p>
+            <div class="collapse" id="comfyui-submodule">
+            <hr style="width: 100%; border: 2px solid black !important; margin: 0 0 15px 0;">
+
+            <button id="inspect-comfyui" onclick="inspectComfyUI()">Inspect ComfyUI</button>
+            <table class="system-table">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody id="comfyui-info-rows">
+                </tbody>
+            </table>
+
+            <br>
+
+            <button id="start-comfyui" onclick="startComfyUI()">Start ComfyUI</button>
+            <button id="stop-comfyui" onclick="stopComfyUI()">Stop ALL ComfyUI</button>
+            
+
+            
+
+            <button id="inspect-comfyui" onclick="inspectComfyUI()">Inspect ComfyUI</button>
+            <br><br>
+
+
+            <table class="system-table">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody id="comfyui-action-rows">
+                </tbody>
+            </table>
+
+            <br>
+
+            <button id="refresh-comfyui-workflows-btn">Refresh ComfyUI Workflows</button>
+
+            <br><br><br>
+            (text-to-image, Stable Diffusion v1.5, SD 1.5) <br><br>
+
+             <div id="workflow-list" style="margin-bottom: 15px;">
+                 <table class="system-table">
+                     <thead>
+                         <tr>
+                             <th>Workflow</th>
+                             <th>Actions</th>
+                         </tr>
+                     </thead>
+                     <tbody id="workflow-rows">
+                     </tbody>
+                 </table>
+             </div>
+
+            
+            
+            <input type="file" id="workflow-file-input" accept=".json" style="display: none;" onchange="uploadComfyUIWorkflow()">
+            <br>
+            <input type="number" id="seed-input" placeholder="Enter seed" min="0" max="999999999999999" style="width: 250px;">
+            <button id="submit-workflow" onclick="submitComfyUIWorkflow()">Submit Workflow</button>
+
+                
+            <div id="comfyui-chat" class="comfyui-chat">
+                <div class="comfyui-chat-header">
+                    ComfyUI Console
+                </div>
+                <div id="comfyui-chat-log" class="comfyui-chat-log"></div>
+            </div>
+            
+
+            
+            
+            </div>
+        </div>
+
 
     </div>
-
-    <br><br>
 
 
 </body>
