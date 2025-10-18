@@ -248,10 +248,12 @@
 
             <br>
 
-            <button id="refresh-comfyui-workflows-btn">Refresh ComfyUI Workflows</button>
-
-            <br><br><br>
-            (text-to-image, Stable Diffusion v1.5, SD 1.5) <br><br>
+            Submit ComfyUI Workflow
+            <br>
+            1: text-to-image, Stable Diffusion v1.5 (SD1.5)<br>
+            2: image-to-3D, Hunyuan3D V2.1 <br>  
+            
+            <br>
 
              <div id="workflow-list" style="margin-bottom: 15px;">
                  <table class="system-table">
@@ -259,6 +261,7 @@
                          <tr>
                              <th>Workflow</th>
                              <th>Actions</th>
+                             <th>Inspector</th>
                          </tr>
                      </thead>
                      <tbody id="workflow-rows">
@@ -270,7 +273,6 @@
             
             <input type="file" id="workflow-file-input" accept=".json" style="display: none;" onchange="uploadComfyUIWorkflow()">
             <br>
-            <input type="number" id="seed-input" placeholder="Enter seed" min="0" max="999999999999999" style="width: 250px;">
             <button id="submit-workflow" onclick="submitComfyUIWorkflow()">Submit Workflow</button>
 
                 

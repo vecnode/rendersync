@@ -922,3 +922,49 @@ async def comfyui_system_stats(request: Request):
         raise HTTPException(status_code=500, detail=f"Failed to get system stats: {str(e)}")
 
 
+@app.get("/workflow-inspector")
+async def workflow_inspector(request: Request):
+    """Workflow Inspector: Interactive workflow analysis and debugging tool."""
+    try:
+        workflow_name = request.query_params.get("workflow")
+        if not workflow_name:
+            raise HTTPException(status_code=400, detail="Workflow parameter is required")
+        
+        # Check if workflow file exists
+        workflow_path = f"rendersync/workflows/{workflow_name}"
+        if not os.path.exists(workflow_path):
+            raise HTTPException(status_code=404, detail=f"Workflow file not found: {workflow_name}")
+        
+        # Serve the static HTML file
+        return FileResponse("rendersync/static/workflow-inspector.html")
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load workflow inspector: {str(e)}")
+
+
+@app.get("/api/workflow-info")
+async def workflow_info(request: Request):
+    """Get workflow file information."""
+    try:
+        workflow_name = request.query_params.get("workflow")
+        if not workflow_name:
+            raise HTTPException(status_code=400, detail="Workflow parameter is required")
+        
+        workflow_path = f"rendersync/workflows/{workflow_name}"
+        if not os.path.exists(workflow_path):
+            raise HTTPException(status_code=404, detail=f"Workflow file not found: {workflow_name}")
+        
+        # Get file stats
+        stat = os.stat(workflow_path)
+        
+        return {
+            "filename": workflow_name,
+            "size": stat.st_size,
+            "last_modified": stat.st_mtime,
+            "created": stat.st_ctime
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get workflow info: {str(e)}")
+
+

@@ -1561,17 +1561,20 @@ async function loadComfyUIWorkflows() {
                     : 'padding: 4px 8px; font-size: 12px; background: #e9ecef !important; color: inherit !important; border: 1px solid black; border-radius: 3px;';
                 const buttonText = isSelected ? 'Selected' : 'Select';
                 
+                const inspectorButtonStyle = 'padding: 4px 8px; font-size: 12px; border-radius: 3px;';
+                
                 return `<tr>
                     <td>${workflow.filename}</td>
                     <td><button onclick="selectComfyUIWorkflowButton('${workflow.filename}')" style="${buttonStyle}">${buttonText}</button></td>
+                    <td><button onclick="openWorkflowInspector('${workflow.filename}')" style="${inspectorButtonStyle}">Inspector</button></td>
                 </tr>`;
             }).join('');
         } else {
-            workflowRows.innerHTML = '<tr><td colspan="2">No workflows found</td></tr>';
+            workflowRows.innerHTML = '<tr><td colspan="3">No workflows found</td></tr>';
         }
     } catch (error) {
         console.error('Failed to load workflows:', error);
-        document.getElementById('workflow-rows').innerHTML = '<tr><td colspan="2">Failed to load workflows</td></tr>';
+        document.getElementById('workflow-rows').innerHTML = '<tr><td colspan="3">Failed to load workflows</td></tr>';
     }
 }
 
@@ -1587,6 +1590,12 @@ function selectComfyUIWorkflowButton(filename) {
     
     // Reload the workflow list to update button states
     loadComfyUIWorkflows();
+}
+
+function openWorkflowInspector(filename) {
+    // Open a new tab with the workflow inspector
+    const inspectorUrl = `/workflow-inspector?workflow=${encodeURIComponent(filename)}`;
+    window.open(inspectorUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
 }
 
 
@@ -1657,7 +1666,7 @@ async function submitComfyUIWorkflow() {
     const rows = document.getElementById('comfyui-action-rows');
     
     // Check if a workflow is selected
-    if (!window.selectedWorkflow) {
+    if (!selectedWorkflow) {
         alert('Please select a workflow first');
         return;
     }
@@ -1668,7 +1677,7 @@ async function submitComfyUIWorkflow() {
     
     try {
         // Load selected workflow from file
-        const workflowPath = `/workflows/${window.selectedWorkflow}`;
+        const workflowPath = `/workflows/${selectedWorkflow}`;
         
         const response = await fetch(workflowPath);
         if (!response.ok) {
@@ -1677,13 +1686,9 @@ async function submitComfyUIWorkflow() {
         
         const workflowData = await response.json();
         
-        // Generate unique client ID and get seed (deterministic or random)
+        // Generate unique client ID and random seed
         const uniqueClientId = `rendersync_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        // Get seed from input or generate random
-        const seedInput = document.getElementById('seed-input');
-        const inputSeed = seedInput.value.trim();
-        const randomSeed = inputSeed ? parseInt(inputSeed) : Math.floor(Math.random() * 1000000000000000);
+        const randomSeed = Math.floor(Math.random() * 1000000000000000);
         
         // Submit the workflow to ComfyUI
         const submitResponse = await fetch('/api/comfyui-submit-workflow', {
@@ -1706,7 +1711,7 @@ async function submitComfyUIWorkflow() {
             rowData.push(['Output', 'Workflow submitted successfully']);
             rowData.push(['Prompt ID', result.prompt_id]);
             rowData.push(['Client ID', uniqueClientId]);
-            rowData.push(['Seed', `${randomSeed} ${inputSeed ? '(deterministic)' : '(random)'}`]);
+            rowData.push(['Seed', `${randomSeed} (random)`]);
             rowData.push(['Status', 'Queued for execution']);
             rowData.push(['ComfyUI URL', '<a href="http://127.0.0.1:8188" target="_blank">http://127.0.0.1:8188</a>']);
         } else {
