@@ -264,6 +264,97 @@ class OllamaManager:
         except Exception:
             return False
             
+    def find_ollama_installation(self) -> Optional[str]:
+        """Find Ollama installation directory."""
+        try:
+            import shutil
+            
+            # First try to find ollama executable in PATH
+            ollama_path = shutil.which("ollama")
+            if ollama_path:
+                # Get the directory containing the executable
+                install_dir = os.path.dirname(ollama_path)
+                if os.path.exists(install_dir):
+                    return install_dir
+            
+            # Check if we're on Windows 11
+            is_windows_11 = False
+            if os.name == 'nt':  # Windows
+                try:
+                    import platform
+                    version = platform.version()
+                    # Windows 11 has build number >= 22000
+                    if version and int(version.split('.')[2]) >= 22000:
+                        is_windows_11 = True
+                except:
+                    pass
+            
+            # Common installation paths for current user
+            if is_windows_11:
+                possible_paths = [
+                    os.path.normpath(os.path.expanduser("~/ollama")),
+                    os.path.normpath(os.path.expanduser("~/Ollama")),
+                    os.path.normpath(os.path.expanduser("~/Desktop/ollama")),
+                    os.path.normpath(os.path.expanduser("~/Desktop/Ollama")),
+                    os.path.normpath(os.path.expanduser("~/Documents/ollama")),
+                    os.path.normpath(os.path.expanduser("~/Documents/Ollama")),
+                    os.path.normpath(os.path.expanduser("~/AppData/Local/Programs/Ollama")),  # Windows default
+                    os.path.normpath(os.path.expanduser("~/Applications/Ollama.app/Contents/MacOS")),  # macOS
+                    os.path.join(os.getcwd(), "ollama"),
+                    os.path.join(os.getcwd(), "Ollama"),
+                ]
+            else:
+                possible_paths = [
+                    os.path.expanduser("~/ollama"),
+                    os.path.expanduser("~/Ollama"),
+                    os.path.expanduser("~/Desktop/ollama"),
+                    os.path.expanduser("~/Desktop/Ollama"),
+                    os.path.expanduser("~/Documents/ollama"),
+                    os.path.expanduser("~/Documents/Ollama"),
+                    os.path.expanduser("~/AppData/Local/Programs/Ollama"),  # Windows default
+                    os.path.expanduser("~/Applications/Ollama.app/Contents/MacOS"),  # macOS
+                    os.path.join(os.getcwd(), "ollama"),
+                    os.path.join(os.getcwd(), "Ollama"),
+                ]
+            
+            # Windows-specific: Check Program Files
+            if os.name == 'nt':  # Windows
+                try:
+                    import winreg
+                    # Check common Windows installation locations
+                    windows_paths = [
+                        os.path.expanduser("~/AppData/Local/Programs/Ollama"),
+                        "C:/Program Files/Ollama",
+                        "C:/Program Files (x86)/Ollama",
+                    ]
+                    possible_paths.extend(windows_paths)
+                except ImportError:
+                    pass
+            
+            # Check each possible path
+            for path in possible_paths:
+                if os.path.exists(path):
+                    # Look for ollama executable in this directory
+                    ollama_exe = os.path.join(path, "ollama.exe" if os.name == 'nt' else "ollama")
+                    if os.path.exists(ollama_exe):
+                        return path
+                    
+                    # Also check subdirectories
+                    try:
+                        for item in os.listdir(path):
+                            item_path = os.path.join(path, item)
+                            if os.path.isdir(item_path):
+                                ollama_exe = os.path.join(item_path, "ollama.exe" if os.name == 'nt' else "ollama")
+                                if os.path.exists(ollama_exe):
+                                    return item_path
+                    except (OSError, PermissionError):
+                        continue
+                        
+        except Exception as e:
+            logger.warning(f"Error finding Ollama installation: {e}")
+            
+        return None
+            
     async def ensure_ollama_running(self) -> bool:
         """Ensure Ollama is running, either by finding existing process or starting new one."""
         try:
@@ -378,12 +469,25 @@ class OllamaManager:
     
     def get_status(self) -> dict:
         """Get current Ollama status."""
-        return {
+        # Check if Ollama is installed
+        install_path = self.find_ollama_installation()
+        installed = install_path is not None
+        
+        # Find Ollama process
+        pid = self.find_ollama_process()
+        
+        result = {
+            "installed": installed,
             "running": self.is_ollama_responding(),
-            "pid": self.ollama_pid,
+            "pid": pid,
             "is_external": self.is_external_process,
             "port_in_use": self.is_port_in_use(11434)
         }
+        
+        if installed:
+            result["location"] = install_path
+            
+        return result
     
     def stop_all_ollama_processes(self) -> dict:
         """Stop all Ollama processes running on the system."""

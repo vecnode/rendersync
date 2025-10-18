@@ -1340,6 +1340,69 @@ async function inspectComfyUI() {
     }
 }
 
+async function openComfyUIOutputFolder() {
+    const button = document.getElementById('open-comfyui-output-folder');
+    const rows = document.getElementById('comfyui-action-rows');
+    
+    button.disabled = true;
+    button.textContent = 'Opening';
+    rows.innerHTML = '<tr><td colspan="2">Getting ComfyUI output folder information</td></tr>';
+    
+    try {
+        const response = await fetch('/api/comfyui-output-folder');
+        const data = await response.json();
+        
+        if (data.error) {
+            rows.innerHTML = `<tr><td colspan="2">Error: ${data.error}</td></tr>`;
+            return;
+        }
+        
+        if (data.success && data.output_folder) {
+            // Display folder information in the table
+            const rowData = [];
+            rowData.push(['Output Folder', data.output_folder]);
+            rowData.push(['ComfyUI Path', data.comfyui_path]);
+            rowData.push(['Folder Exists', data.output_exists ? 'Yes' : 'No']);
+            
+            // Try to open the folder using the backend endpoint
+            try {
+                const openResponse = await fetch('/api/comfyui-open-output-folder', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const openData = await openResponse.json();
+                
+                if (openData.success) {
+                    rowData.push(['Status', 'Folder opened successfully']);
+                } else {
+                    rowData.push(['Status', `Failed to open: ${openData.error}`]);
+                }
+            } catch (openError) {
+                rowData.push(['Status', `Error opening folder: ${openError.message}`]);
+            }
+            
+            // Display all data in table format
+            if (rowData.length === 0) {
+                rows.innerHTML = '<tr><td colspan="2">No folder data available</td></tr>';
+            } else {
+                rows.innerHTML = rowData.map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td></tr>`).join('');
+            }
+            
+        } else {
+            rows.innerHTML = '<tr><td colspan="2">Failed to get ComfyUI output folder path</td></tr>';
+        }
+        
+    } catch (error) {
+        rows.innerHTML = `<tr><td colspan="2">Error opening ComfyUI output folder: ${error.message}</td></tr>`;
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Open ComfyUI Output Folder';
+    }
+}
+
 async function stopComfyUI() {
     const button = document.getElementById('stop-comfyui');
     const rows = document.getElementById('comfyui-action-rows');

@@ -70,21 +70,21 @@ class MultiPingRequest(BaseModel):
 
 
 # ============================================================================
-# PROFESSIONAL PORT MANAGEMENT SYSTEM FOR RENDER FARMS
+# PORT MANAGEMENT SYSTEM
 # ============================================================================
 
 RENDER_FARM_PORTS = [
-    8080,   # Standard HTTP alternative
-    8000,   # Development standard
-    8081,   # Common render farm port
-    8082,   # Secondary render service
-    3000,   # Node.js standard
-    5000,   # Flask standard
-    9000,   # Common render farm port
-    8888,   # Jupyter/development standard
-    8001,   # Alternative development port
-    8083,   # Tertiary render service
-    7000,   # Common render farm port
+    8080,   
+    8000,   
+    8081,   
+    8082,   
+    3000,   
+    5000,   
+    9000,   
+    8888,   
+    8001,   
+    8083,   
+    7000,   
 ]
 
 DEFAULT_PORT = 8080  # Best choice for render farms
@@ -220,6 +220,33 @@ def get_port_info():
 
 active_connections = {}
 
+# Initialize application directories by discovering installations
+def discover_app_directories():
+    """Discover and return application installation directories."""
+    ollama_path = None
+    comfyui_path = None
+    
+    # Discover Ollama installation
+    try:
+        ollama_manager = OllamaManager()
+        ollama_path = ollama_manager.find_ollama_installation()
+    except Exception as e:
+        print(f"\033[93mError discovering Ollama: {e}\033[0m")
+    
+    # Discover ComfyUI installation
+    try:
+        comfyui_manager = ComfyUIManager()
+        comfyui_path = comfyui_manager.find_comfyui_installation()
+    except Exception as e:
+        print(f"\033[93mError discovering ComfyUI: {e}\033[0m")
+    
+    return ollama_path, comfyui_path
+
+
+ollama_app_directory, comfyui_app_directory = discover_app_directories()
+
+
+
 # ============================================================================
 # FASTAPI APPLICATION
 # ============================================================================
@@ -243,6 +270,21 @@ if os.path.exists(static_dir):
 async def _startup() -> None:
     # Server startup: secures port, checks timeout, initializes render farm operations
     print("rendersync server starting")
+    
+    # Display discovered application installations
+    global ollama_app_directory, comfyui_app_directory
+    
+    print("\033[96mApplication installations discovered:\033[0m")
+    
+    if ollama_app_directory:
+        print(f"\033[92mOllama found at: {ollama_app_directory}\033[0m")
+    else:
+        print("\033[91mOllama installation not found\033[0m")
+    
+    if comfyui_app_directory:
+        print(f"\033[92mComfyUI found at: {comfyui_app_directory}\033[0m")
+    else:
+        print("\033[91mComfyUI installation not found\033[0m")
     
     # Secure port for render farm operations
     try:
@@ -271,7 +313,7 @@ async def root():
     html_path = os.path.join(static_dir, "index.html")
     if os.path.exists(html_path):
         return FileResponse(html_path)
-    return {"message": "Local LLM Server API", "docs": "/docs"}
+    return {"message": "rendersync server", "docs": "/docs"}
 
 @app.get("/favicon.ico")
 async def favicon():
@@ -557,6 +599,111 @@ async def comfyui_status():
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"ComfyUI inspection failed: {str(e)}")
+
+
+@app.get("/api/comfyui-output-folder")
+async def comfyui_output_folder():
+    # ComfyUI output folder: no input, returns the path to ComfyUI output folder
+    """Get ComfyUI output folder path."""
+    try:
+        global comfyui_app_directory
+        
+        if not comfyui_app_directory:
+            # Try to discover ComfyUI installation if not already found
+            manager = ComfyUIManager()
+            comfyui_path = manager.find_comfyui_installation()
+            if not comfyui_path:
+                return {"error": "ComfyUI installation not found"}
+            comfyui_app_directory = comfyui_path
+        
+        # Standard ComfyUI output folder is "output" in the ComfyUI directory
+        output_folder = os.path.join(comfyui_app_directory, "output")
+        
+        return {
+            "success": True,
+            "comfyui_path": comfyui_app_directory,
+            "output_folder": output_folder,
+            "output_exists": os.path.exists(output_folder)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get ComfyUI output folder: {str(e)}")
+
+
+@app.post("/api/comfyui-open-output-folder")
+async def comfyui_open_output_folder():
+    # ComfyUI open output folder: no input, opens the ComfyUI output folder in file manager
+    """Open ComfyUI output folder in system file manager."""
+    try:
+        global comfyui_app_directory
+        
+        if not comfyui_app_directory:
+            # Try to discover ComfyUI installation if not already found
+            manager = ComfyUIManager()
+            comfyui_path = manager.find_comfyui_installation()
+            if not comfyui_path:
+                return {"error": "ComfyUI installation not found"}
+            comfyui_app_directory = comfyui_path
+        
+        # Standard ComfyUI output folder is "output" in the ComfyUI directory
+        output_folder = os.path.join(comfyui_app_directory, "output")
+        
+        # Open folder in system file manager
+        if os.name == 'nt':  # Windows
+            result = subprocess.run(['explorer', output_folder], capture_output=True, text=True)
+            # Explorer returns non-zero exit status even on success, so we check if folder exists
+            # and also check if the command executed without major errors
+            if os.path.exists(output_folder) and result.returncode <= 1:  # 0 or 1 are both "success" for explorer
+                return {
+                    "success": True,
+                    "message": "Folder opened successfully",
+                    "output_folder": output_folder
+                }
+            elif not os.path.exists(output_folder):
+                return {"error": f"Folder does not exist: {output_folder}"}
+            else:
+                return {"error": f"Failed to open folder: explorer returned exit code {result.returncode}"}
+        elif os.name == 'posix':  # macOS and Linux
+            if sys.platform == 'darwin':  # macOS
+                result = subprocess.run(['open', output_folder], check=True)
+            else:  # Linux
+                result = subprocess.run(['xdg-open', output_folder], check=True)
+            
+            return {
+                "success": True,
+                "message": "Folder opened successfully",
+                "output_folder": output_folder
+            }
+        
+    except subprocess.CalledProcessError as e:
+        return {"error": f"Failed to open folder: {str(e)}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to open ComfyUI output folder: {str(e)}")
+
+
+@app.get("/api/ollama-directory")
+async def ollama_directory():
+    # Ollama directory: no input, returns the path to Ollama installation directory
+    """Get Ollama installation directory path."""
+    try:
+        global ollama_app_directory
+        
+        if not ollama_app_directory:
+            # Try to discover Ollama installation if not already found
+            manager = OllamaManager()
+            ollama_path = manager.find_ollama_installation()
+            if not ollama_path:
+                return {"error": "Ollama installation not found"}
+            ollama_app_directory = ollama_path
+        
+        return {
+            "success": True,
+            "ollama_path": ollama_app_directory,
+            "directory_exists": os.path.exists(ollama_app_directory)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get Ollama directory: {str(e)}")
 
 
 @app.post("/api/comfyui-stop")

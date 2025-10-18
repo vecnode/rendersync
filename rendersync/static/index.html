@@ -27,7 +27,7 @@
             <p><button class="btn btn-link module-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#core-module" aria-expanded="false" aria-controls="core-module"></button>(core module)</p>
             <div class="collapse" id="core-module">
                 
-                <hr style="width: 100%; border: 2px solid black !important; margin: 0 0 15px 0;">
+                <div style="width: 100%; height: 2px; background-color: black; margin: 0 0 15px 0;"></div>
                 <button id="refresh-connections" onclick="loadConnections()">Refresh Connections</button>
                 
                 <div id="connections-console" class="connections-console">
@@ -156,7 +156,7 @@
         <div class="module">
             <p><button class="btn btn-link module-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#ollama-submodule" aria-expanded="false" aria-controls="ollama-submodule"></button>(ollama module)</p>
             <div class="collapse" id="ollama-submodule">
-                <hr style="width: 100%; border: 2px solid black !important; margin: 0 0 15px 0;">
+                <div style="width: 100%; height: 2px; background-color: black; margin: 0 0 15px 0;"></div>
 
                 <button id="inspect-ollama" onclick="inspectOllama()">Inspect ollama</button>
                 <table class="system-table">
@@ -207,9 +207,11 @@
         <div class="module">
             <p><button class="btn btn-link module-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#comfyui-submodule" aria-expanded="false" aria-controls="comfyui-submodule"></button>(comfyui module)</p>
             <div class="collapse" id="comfyui-submodule">
-            <hr style="width: 100%; border: 2px solid black !important; margin: 0 0 15px 0;">
+            
+            <div style="width: 100%; height: 2px; background-color: black; margin: 0 0 15px 0;"></div>
 
             <button id="inspect-comfyui" onclick="inspectComfyUI()">Inspect ComfyUI</button>
+
             <table class="system-table">
                 <thead>
                     <tr>
@@ -229,7 +231,7 @@
 
             
 
-            <button id="inspect-comfyui" onclick="inspectComfyUI()">Inspect ComfyUI</button>
+            <button id="open-comfyui-output-folder" onclick="openComfyUIOutputFolder()">Open ComfyUI Output Folder</button>
             <br><br>
 
 

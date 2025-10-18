@@ -129,30 +129,45 @@ class ComfyUIManager:
             
         return None
         
-    def is_comfyui_responding(self) -> bool:
-        """Check if ComfyUI is responding on its API endpoint."""
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.settimeout(0.5)  # Faster timeout
-                result = s.connect_ex(('127.0.0.1', 8188))
-                return result == 0
-        except Exception:
-            return False
             
     def find_comfyui_installation(self) -> Optional[str]:
         """Find ComfyUI installation directory."""
         try:
+            # Check if we're on Windows 11
+            is_windows_11 = False
+            if os.name == 'nt':  # Windows
+                try:
+                    import platform
+                    version = platform.version()
+                    # Windows 11 has build number >= 22000
+                    if version and int(version.split('.')[2]) >= 22000:
+                        is_windows_11 = True
+                except:
+                    pass
+            
             # Common installation paths for current user
-            possible_paths = [
-                os.path.expanduser("~/ComfyUI"),
-                os.path.expanduser("~/comfyui"),
-                os.path.expanduser("~/Desktop/ComfyUI"),
-                os.path.expanduser("~/Desktop/comfyui"),
-                os.path.expanduser("~/Documents/ComfyUI"),
-                os.path.expanduser("~/Documents/comfyui"),
-                os.path.join(os.getcwd(), "ComfyUI"),
-                os.path.join(os.getcwd(), "comfyui"),
-            ]
+            if is_windows_11:
+                possible_paths = [
+                    os.path.normpath(os.path.expanduser("~/ComfyUI")),
+                    os.path.normpath(os.path.expanduser("~/comfyui")),
+                    os.path.normpath(os.path.expanduser("~/Desktop/ComfyUI")),
+                    os.path.normpath(os.path.expanduser("~/Desktop/comfyui")),
+                    os.path.normpath(os.path.expanduser("~/Documents/ComfyUI")),
+                    os.path.normpath(os.path.expanduser("~/Documents/comfyui")),
+                    os.path.join(os.getcwd(), "ComfyUI"),
+                    os.path.join(os.getcwd(), "comfyui"),
+                ]
+            else:
+                possible_paths = [
+                    os.path.expanduser("~/ComfyUI"),
+                    os.path.expanduser("~/comfyui"),
+                    os.path.expanduser("~/Desktop/ComfyUI"),
+                    os.path.expanduser("~/Desktop/comfyui"),
+                    os.path.expanduser("~/Documents/ComfyUI"),
+                    os.path.expanduser("~/Documents/comfyui"),
+                    os.path.join(os.getcwd(), "ComfyUI"),
+                    os.path.join(os.getcwd(), "comfyui"),
+                ]
             
             # Windows-specific: Check all user directories
             if os.name == 'nt':  # Windows
