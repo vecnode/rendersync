@@ -1,12 +1,11 @@
 # ============================================================================
 # RENDERSYNC CORE SERVER
 # ============================================================================
-# Main FastAPI application for render farm management and AI integration
+# Main FastAPI application for management
 
 # ============================================================================
 # CORE IMPORTS
 # ============================================================================
-# Standard library imports for system operations
 import subprocess  
 import sys         
 import os          
@@ -24,7 +23,6 @@ from pydantic import BaseModel
 # ============================================================================
 # MODULE IMPORTS
 # ============================================================================
-# System monitoring and diagnostics modules
 from .modules.system import get_system_info_data, inspect_pid_data, ping_ip_data, ping_multiple_ips_data
 from .modules.network import get_network_info_data
 from .modules.network import inspect_port
@@ -73,7 +71,7 @@ class MultiPingRequest(BaseModel):
 # PORT MANAGEMENT SYSTEM
 # ============================================================================
 
-RENDER_FARM_PORTS = [
+RENDERSYNC_PORTS = [
     8080,   
     8000,   
     8081,   
@@ -87,23 +85,23 @@ RENDER_FARM_PORTS = [
     7000,   
 ]
 
-DEFAULT_PORT = 8080  # Best choice for render farms
+DEFAULT_PORT = 8080
 
 
 def find_available_port(start_port=None):
-    """Find the best available port for render farm operations."""
+    """Find the best available port."""
     if start_port is None:
         start_port = DEFAULT_PORT
     
     # Check if start_port is in our preferred list
-    if start_port in RENDER_FARM_PORTS:
-        ports_to_try = [start_port] + [p for p in RENDER_FARM_PORTS if p != start_port]
+    if start_port in RENDERSYNC_PORTS:
+        ports_to_try = [start_port] + [p for p in RENDERSYNC_PORTS if p != start_port]
     else:
-        ports_to_try = [start_port] + RENDER_FARM_PORTS
+        ports_to_try = [start_port] + RENDERSYNC_PORTS
     
     for port in ports_to_try:
         if is_port_available(port):
-            print(f"\033[92mPORTMANAGER\033[0m Selected port {port} for render farm operations")
+            print(f"\033[92mPORTMANAGER\033[0m Selected port {port}")
             return port
     
     # Fallback: find any available port in the professional range
@@ -182,13 +180,13 @@ def secure_port_for_render_farm(port=None):
 def get_port_info():
     """Get information about port usage and availability."""
     info = {
-        'preferred_ports': RENDER_FARM_PORTS,
+        'preferred_ports': RENDERSYNC_PORTS,
         'default_port': DEFAULT_PORT,
         'port_usage': {}
     }
     
     # Check usage of preferred ports
-    for port in RENDER_FARM_PORTS[:5]:  # Check first 5 ports
+    for port in RENDERSYNC_PORTS[:5]:  # Check first 5 ports
         info['port_usage'][port] = {
             'available': is_port_available(port),
             'processes': []
@@ -214,11 +212,12 @@ def get_port_info():
 
 
 # ============================================================================
-# CONNECTION TRACKING
+# CONNECTION TRACKING AND CONTROL
 # ============================================================================
-# Global Browser connection tracking
+# Global Browser connection tracking and access control
 
 active_connections = {}
+connection_access_enabled = True  # Global flag to control external connections
 
 # Initialize application directories by discovering installations
 def discover_app_directories():
@@ -253,17 +252,55 @@ ollama_app_directory, comfyui_app_directory = discover_app_directories()
 
 app = FastAPI(title="rendersync core", version="0.1.0")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Custom CORS middleware that respects connection control
+class DynamicCORSMiddleware:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            # Check if external connections are allowed
+            if not connection_access_enabled:
+                # Block external requests (not from localhost)
+                client_ip = scope.get("client", ["unknown"])[0]
+                if client_ip not in ["127.0.0.1", "::1", "localhost"]:
+                    response = Response(
+                        content='{"error": "External connections disabled"}',
+                        status_code=403,
+                        media_type="application/json"
+                    )
+                    await response(scope, receive, send)
+                    return
+
+        # Apply CORS headers
+        if scope["type"] == "http":
+            headers = []
+            headers.append((b"access-control-allow-origin", b"*" if connection_access_enabled else b"null"))
+            headers.append((b"access-control-allow-methods", b"GET, POST, PUT, DELETE, OPTIONS"))
+            headers.append((b"access-control-allow-headers", b"*"))
+            headers.append((b"access-control-allow-credentials", b"true"))
+            
+            # Add headers to response
+            async def send_wrapper(message):
+                if message["type"] == "http.response.start":
+                    message["headers"].extend(headers)
+                await send(message)
+            
+            await self.app(scope, receive, send_wrapper)
+        else:
+            await self.app(scope, receive, send)
+
+app.add_middleware(DynamicCORSMiddleware)
 
 # Mount static files
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+
+# ============================================================================
+# SERVER LIFECYCLE EVENTS
+# ============================================================================
 
 
 @app.on_event("startup")
@@ -289,10 +326,10 @@ async def _startup() -> None:
     # Secure port for render farm operations
     try:
         secured_port = secure_port_for_render_farm()
-        print(f"\033[92mPORTMANAGER\033[0m Render farm server secured on port {secured_port}")
+        print(f"\033[92mPORTMANAGER\033[0m Rendersync server secured on port {secured_port}")
     except Exception as e:
         print(f"\033[92mPORTMANAGER\033[0m Failed to secure port: {e}")
-        print(f"\033[92mPORTMANAGER\033[0m Continuing with default port configuration")
+        print(f"\033[92mPORTMANAGER\033[0m Continuing with default port")
     
     # Check for timeout on startup
     if check_application_timeout():
@@ -304,6 +341,11 @@ async def _shutdown() -> None:
     # Server shutdown: cleans up processes, terminates gracefully
     print("rendersync server shutting down")
     cleanup_processes()
+
+
+# ============================================================================
+# CORE APPLICATION ENDPOINTS
+# ============================================================================
 
 @app.get("/")
 async def root():
@@ -327,6 +369,11 @@ async def chrome_devtools():
     """Handle Chrome DevTools metadata request."""
     return {"version": "1.0", "name": "rendersync"}
 
+
+# ============================================================================
+# SYSTEM INFORMATION ENDPOINTS
+# ============================================================================
+
 @app.get("/api/system-info")
 async def system_info():
     # System info: no input, returns complete system specifications and hardware data
@@ -349,11 +396,84 @@ async def terminal_info():
 
 
 
+# ============================================================================
+# NETWORK AND INSPECTION ENDPOINTS
+# ============================================================================
+
 @app.get("/health")
 async def health():
     # Health check: no input, returns simple status confirmation
     """Simple health check endpoint."""
     return {"status": "ok", "service": "rendersync"}
+
+@app.get("/api/server-info")
+async def server_info():
+    # Server info: no input, returns server details and network accessibility
+    """Get server information and network details."""
+    import socket
+    
+    # Get local IP address
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+    
+    # Get port info
+    port_info = get_port_info()
+    
+    return {
+        "status": "running",
+        "service": "rendersync",
+        "hostname": hostname,
+        "local_ip": local_ip,
+        "port_info": port_info,
+        "accessible_from_network": connection_access_enabled,
+        "cors_enabled": True,
+        "connection_status": "enabled" if connection_access_enabled else "disabled"
+    }
+
+@app.post("/api/connection-control")
+async def connection_control(request: dict):
+    # Connection control: takes action (enable/disable), controls external connection access
+    """Enable or disable external connections to the server."""
+    global connection_access_enabled
+    
+    try:
+        action = request.get("action", "").strip().lower()
+        
+        if action == "enable":
+            connection_access_enabled = True
+            status = "enabled"
+            message = "External connections enabled"
+        elif action == "disable":
+            connection_access_enabled = False
+            status = "disabled"
+            message = "External connections disabled"
+        else:
+            raise HTTPException(status_code=400, detail="Action must be 'enable' or 'disable'")
+        
+        return {
+            "success": True,
+            "action": action,
+            "status": status,
+            "message": message,
+            "connection_access_enabled": connection_access_enabled,
+            "timestamp": __import__('datetime').datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Connection control failed: {str(e)}")
+
+@app.get("/api/connection-status")
+async def connection_status():
+    # Connection status: no input, returns current connection control status
+    """Get current connection control status."""
+    return {
+        "connection_access_enabled": connection_access_enabled,
+        "status": "enabled" if connection_access_enabled else "disabled",
+        "active_connections_count": len(active_connections),
+        "message": "External connections allowed" if connection_access_enabled else "External connections blocked"
+    }
+
+
 
 
 @app.get("/api/process-status")
@@ -413,6 +533,10 @@ async def ping_multiple_endpoint(request: MultiPingRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Multi-ping failed: {str(e)}")
 
+
+# ============================================================================
+# OLLAMA AI SERVICE ENDPOINTS
+# ============================================================================
 
 @app.get("/api/ollama-status")
 async def ollama_status():
@@ -510,6 +634,10 @@ async def ollama_models():
         raise HTTPException(status_code=500, detail=f"Failed to get Ollama models: {str(e)}")
 
 
+# ============================================================================
+# CONNECTION MANAGEMENT ENDPOINTS
+# ============================================================================
+
 @app.post("/api/connections")
 async def register_connection(request: dict):
     """Register a new browser connection."""
@@ -587,6 +715,10 @@ async def ollama_chat(request: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to chat with Ollama: {str(e)}")
 
+
+# ============================================================================
+# COMFYUI INTEGRATION ENDPOINTS
+# ============================================================================
 
 @app.get("/api/comfyui-status")
 async def comfyui_status():
@@ -794,6 +926,10 @@ async def comfyui_history(prompt_id: str, request: Request):
 
 
 
+# ============================================================================
+# WORKFLOW MANAGEMENT ENDPOINTS
+# ============================================================================
+
 @app.get("/api/workflows")
 async def list_workflows():
     # Workflow list: no input, returns list of available workflow JSON files
@@ -921,6 +1057,10 @@ async def comfyui_system_stats(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get system stats: {str(e)}")
 
+
+# ============================================================================
+# WORKFLOW INSPECTOR ENDPOINTS
+# ============================================================================
 
 @app.get("/workflow-inspector")
 async def workflow_inspector(request: Request):

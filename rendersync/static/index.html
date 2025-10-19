@@ -23,25 +23,26 @@
     
     <div class="container">
 
+
         <div class="module">
-            <p><button class="btn btn-link module-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#core-module" aria-expanded="false" aria-controls="core-module"></button>(core module)</p>
+            <p><button class="btn btn-link module-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#core-module" aria-expanded="false" aria-controls="core-module"></button>Instance</p>
             <div class="collapse" id="core-module">
                 
                 <div style="width: 100%; height: 2px; background-color: black; margin: 0 0 15px 0;"></div>
-                <button id="refresh-connections" onclick="loadConnections()">Refresh Connections</button>
                 
-                <div id="connections-console" class="connections-console">
-                    <div class="console-header">
-                        Browser Connections
-                        <span id="connection-count">0 connections</span>
+                <!-- Connection Control Panel -->
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div id="connection-indicator" style="width: 20px; height: 20px; border-radius: 50%; background-color: #4caf50; border: 2px solid black;"></div>
+                        <span id="connection-status-text">External connections enabled</span>
                     </div>
-                    <div id="connections-log" class="console-log"></div>
-                </div>    
-
-                <br>
+                    <button id="toggle-connections" onclick="toggleConnectionAccess()" style="padding: 8px 16px; font-size: 14px;">
+                        Disable External Connections
+                    </button>
+                </div>
                 
-
-                <button id="refresh-system-info" onclick="loadSystemInfo()">Get System Info</button>
+                <!-- Server Information -->
+                <button id="refresh-server-info" onclick="loadServerInfo()">Refresh Server Info</button>
                 <table class="system-table">
                     <thead>
                         <tr>
@@ -49,99 +50,150 @@
                             <th>Value</th>
                         </tr>
                     </thead>
-                    <tbody id="system-info-rows">
+                    <tbody id="server-info-rows">
                     </tbody>
                 </table>
+            </div>
+        </div>
 
-                <br>
-
-                <button id="refresh-terminal-info" onclick="loadTerminalInfo()">Get Terminal Info</button>
-
-                <table class="system-table">
-                    <thead>
-                        <tr>
-                            <th>Property</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="terminal-info-rows">
-                    </tbody>
-                </table>
-
-                <br>
-
-                <button id="refresh-apps-running-info" onclick="loadAppsRunningInfo()">Get Apps Running</button>
-                <table class="system-table">
-                    <thead>
-                        <tr>
-                            <th>Property</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="apps-running-info-rows">
-                    </tbody>
-                </table>
-
-                <br>
-    
-                <button id="refresh-network-info" onclick="loadNetworkInfo()">Get Network Info</button>
+        <div class="module">
+            <p><button class="btn btn-link module-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#scheduler-module" aria-expanded="false" aria-controls="scheduler-module"></button>Scheduler</p>
+            <div class="collapse" id="scheduler-module">
                 
+                <div style="width: 100%; height: 2px; background-color: black; margin: 0 0 15px 0;"></div>
+                clocks, timers, and tie to functions
+            </div>
+        </div>
 
+
+        <div class="module">
+            <p><button class="btn btn-link module-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#system-module" aria-expanded="false" aria-controls="system-module"></button>System and Network</p>
+            <div class="collapse" id="system-module">
                 
-                <table class="network-table">
-                    <thead>
-                        <tr>
-                            <th>Property</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="network-info-rows">
-                    </tbody>
-                </table>
+                <div style="width: 100%; height: 2px; background-color: black; margin: 0 0 15px 0;"></div>
                 
-                
-                
-                <br>
-                <input type="number" id="port-input" placeholder="(1-65535)" min="1" max="65535"">
-                <button id="inspect-port" onclick="inspectPort()">Inspect Port</button>
-                <table class="system-table">
-                    <thead>
-                        <tr>
-                            <th>Property</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="port-inspection-rows">
-                    </tbody>
-                </table>
-                <br>
-                <input type="text" id="pid-input" placeholder="Enter PID number">
-                <button id="inspect-pid" onclick="inspectPID()">Inspect PID</button>
-                <table class="system-table">
-                    <thead>
-                        <tr>
-                            <th>Property</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pid-inspection-rows">
-                    </tbody>
-                </table>
-                <br>
-                <input type="text" id="ping-input" placeholder="IP address or hostname" style="width: 200px;">
-                <input type="number" id="ping-port-input" placeholder="Port (optional)" min="1" max="65535" style="width: 120px;">
-                <button id="ping-ip" onclick="pingIP()">Ping IP</button>
-                <table class="system-table">
-                    <thead>
-                        <tr>
-                            <th>Property</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ping-results-rows">
-                    </tbody>
-                </table>
-                <br>
+                <div style="display: flex; gap: 20px;">
+                    <!-- Left Column -->
+                    <div style="flex: 1;">
+                        <button id="refresh-connections" onclick="loadConnections()">Refresh Connections</button>
+                        
+                        <div id="connections-console" class="connections-console">
+                            <div class="console-header">
+                                Browser Connections
+                                <span id="connection-count">0 connections</span>
+                            </div>
+                            <div id="connections-log" class="console-log"></div>
+                        </div>    
+
+                        <br>
+                        
+
+                        <button id="refresh-system-info" onclick="loadSystemInfo()">Get System Info</button>
+                        <table class="system-table">
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="system-info-rows">
+                            </tbody>
+                        </table>
+
+                        <br>
+
+                        <button id="refresh-terminal-info" onclick="loadTerminalInfo()">Get Terminal Info</button>
+
+                        <table class="system-table">
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="terminal-info-rows">
+                            </tbody>
+                        </table>
+
+                        <br>
+
+                        <button id="refresh-apps-running-info" onclick="loadAppsRunningInfo()">Get Apps Running</button>
+                        <table class="system-table">
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="apps-running-info-rows">
+                            </tbody>
+                        </table>
+
+                        <br>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div style="flex: 1;">
+                        <button id="refresh-network-info" onclick="loadNetworkInfo()">Get Network Info</button>
+                        
+
+                        
+                        <table class="network-table">
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="network-info-rows">
+                            </tbody>
+                        </table>
+                        
+                        
+                        
+                        <br>
+                        <input type="number" id="port-input" placeholder="(1-65535)" min="1" max="65535"">
+                        <button id="inspect-port" onclick="inspectPort()">Inspect Port</button>
+                        <table class="system-table">
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="port-inspection-rows">
+                            </tbody>
+                        </table>
+                        <br>
+                        <input type="text" id="pid-input" placeholder="Enter PID number">
+                        <button id="inspect-pid" onclick="inspectPID()">Inspect PID</button>
+                        <table class="system-table">
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pid-inspection-rows">
+                            </tbody>
+                        </table>
+                        <br>
+                        <input type="text" id="ping-input" placeholder="IP address or hostname" style="width: 200px;">
+                        <input type="number" id="ping-port-input" placeholder="Port (optional)" min="1" max="65535" style="width: 120px;">
+                        <button id="ping-ip" onclick="pingIP()">Ping IP</button>
+                        <table class="system-table">
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ping-results-rows">
+                            </tbody>
+                        </table>
+                        <br>
+                    </div>
+                </div>
 
             </div>
         </div>
@@ -154,58 +206,73 @@
 
         
         <div class="module">
-            <p><button class="btn btn-link module-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#ollama-submodule" aria-expanded="false" aria-controls="ollama-submodule"></button>(ollama module)</p>
+            <p><button class="btn btn-link module-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#ollama-submodule" aria-expanded="false" aria-controls="ollama-submodule"></button>Ollama</p>
             <div class="collapse" id="ollama-submodule">
                 <div style="width: 100%; height: 2px; background-color: black; margin: 0 0 15px 0;"></div>
 
-                <button id="inspect-ollama" onclick="inspectOllama()">Inspect ollama</button>
-                <table class="system-table">
-                    <thead>
-                        <tr>
-                            <th>Property</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ollama-info-rows">
-                    </tbody>
-                </table>
+                <div style="display: flex; gap: 20px;">
+                    <!-- Left Column -->
+                    <div style="flex: 1;">
+                        <button id="inspect-ollama" onclick="inspectOllama()">Inspect ollama</button>
+                        <table class="system-table">
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ollama-info-rows">
+                            </tbody>
+                        </table>
 
-                <br>
+                        <br>
 
-                <button id="start-ollama" onclick="startOllama()">Start ollama</button>
-                <button id="stop-ollama" onclick="stopOllama()">Stop ollama</button>
-                <button id="get-models" onclick="getOllamaModels()">Get ollama Models</button>
+                        <button id="start-ollama" onclick="startOllama()">Start ollama</button>
+                        <button id="stop-ollama" onclick="stopOllama()">Stop ollama</button>
+                        <button id="get-models" onclick="getOllamaModels()">Get ollama Models</button>
 
-                <table class="system-table">
-                    <thead>
-                        <tr>
-                            <th>Property</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ollama-action-rows">
-                    </tbody>
-                </table>
+                        <table class="system-table">
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ollama-action-rows">
+                            </tbody>
+                        </table>
 
-                <br>
-                <input type="text" id="ollama-query-input" placeholder="Enter your question for Ollama" style="width: 300px;">
-                <select id="ollama-model-select" style="margin-right: 10px; width: 200px;">
-                    <option value="">Select Model</option>
-                </select>
-                <button id="query-ollama" onclick="queryOllama()">Query ollama</button>
-                
-                <div id="ollama-chat" class="ollama-chat">
-                    <div class="ollama-chat-header">
-                        Ollama Console
+                        <br>
                     </div>
-                    <div id="ollama-chat-log" class="ollama-chat-log"></div>
+                    
+                    <!-- Right Column -->
+                    <div style="flex: 1;">
+                        <input type="text" id="ollama-query-input" placeholder="Enter your question for Ollama" style="width: 300px;">
+                        <br>
+
+                        <select id="ollama-model-select" style="margin-right: 10px; width: 200px;">
+                            <option value="">Select Model</option>
+                        </select>
+                        <button id="query-ollama" onclick="queryOllama()">Query ollama</button>
+
+                        <div id="ollama-chat" class="ollama-chat">
+                            <div class="ollama-chat-header">
+                                Ollama Console
+                            </div>
+                            <div id="ollama-chat-log" class="ollama-chat-log"></div>
+                        </div>
+                        
+                        
+                    </div>
+                    
                 </div>
+                
             </div>
         </div>
 
 
         <div class="module">
-            <p><button class="btn btn-link module-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#comfyui-submodule" aria-expanded="false" aria-controls="comfyui-submodule"></button>(comfyui module)</p>
+            <p><button class="btn btn-link module-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#comfyui-submodule" aria-expanded="false" aria-controls="comfyui-submodule"></button>ComfyUI</p>
             <div class="collapse" id="comfyui-submodule">
             
             <div style="width: 100%; height: 2px; background-color: black; margin: 0 0 15px 0;"></div>

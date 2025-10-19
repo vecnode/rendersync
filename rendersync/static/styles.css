@@ -203,7 +203,7 @@ textarea:focus {
     background-color: #e9ecef;  /* Light background for readability */
     font-family: 'Segoe UI', 'Aptos', 'SF Pro Display', 'Helvetica Neue', 'Arial', sans-serif;
     font-size: 14px;
-    max-height: 500px;  /* Approximately 20 rows at 25px per row */
+    max-height: 200px;  /* Approximately 20 rows at 25px per row */
     overflow-y: auto;  /* Vertical scroll when content exceeds height */
     display: block;  /* Required for overflow to work */
 }
@@ -252,7 +252,6 @@ textarea:focus {
     background-color: #1e1e1e;
     color: #d4d4d4;
     font-size: 14px;
-    overflow: hidden;
 }
 
 .console-header {
@@ -266,8 +265,7 @@ textarea:focus {
 }
 
 .console-log {
-    min-height: 30px;
-    max-height: 250px;
+    height: 150px;
     overflow-y: auto;
     padding: 8px;
     background-color: #1e1e1e;
@@ -322,6 +320,7 @@ textarea:focus {
     color: #d4d4d4;
     font-size: 14px;
     overflow: hidden;
+    max-height: 300px;
 }
 
 .ollama-chat-header {
@@ -336,7 +335,7 @@ textarea:focus {
 
 .ollama-chat-log {
     min-height: 30px;
-    max-height: 250px;
+    max-height: 280px;
     overflow-y: auto;
     padding: 8px;
     background-color: #1e1e1e;
@@ -384,6 +383,7 @@ textarea:focus {
     color: #d4d4d4;
     font-size: 14px;
     overflow: hidden;
+    max-height: 200px;
 }
 
 .comfyui-chat-header {

@@ -9,7 +9,8 @@
 // Load workflows when page loads
 document.addEventListener('DOMContentLoaded', function() {
     loadComfyUIWorkflows();
-    
+    loadConnectionStatus();
+    loadServerInfo();
 });
 
 
@@ -81,8 +82,10 @@ function addOllamaChatEntry(message, type = 'ollama-response') {
     
     ollamaChatLog.appendChild(entry);
     
-    // Auto-scroll to bottom
-    ollamaChatLog.scrollTop = ollamaChatLog.scrollHeight;
+    // Auto-scroll to bottom with a small delay to ensure DOM is updated
+    setTimeout(() => {
+        ollamaChatLog.scrollTop = ollamaChatLog.scrollHeight;
+    }, 10);
 }
 
 
@@ -1103,8 +1106,10 @@ async function queryOllama() {
     // Clear input
     input.value = '';
     
-    // Scroll to bottom
-    ollamaChatLog.scrollTop = ollamaChatLog.scrollHeight;
+    // Scroll to bottom immediately after user message
+    setTimeout(() => {
+        ollamaChatLog.scrollTop = ollamaChatLog.scrollHeight;
+    }, 10);
     
     try {
         const response = await fetch('/api/ollama-chat', {
@@ -1137,8 +1142,10 @@ async function queryOllama() {
         button.disabled = false;
         button.textContent = 'Query ollama';
         
-        // Scroll to bottom
-        ollamaChatLog.scrollTop = ollamaChatLog.scrollHeight;
+        // Scroll to bottom after response
+        setTimeout(() => {
+            ollamaChatLog.scrollTop = ollamaChatLog.scrollHeight;
+        }, 10);
     }
 }
 
@@ -1743,6 +1750,132 @@ async function submitComfyUIWorkflow() {
 
 
 
+
+// ============================================================================
+// CONNECTION CONTROL FUNCTIONS
+// ============================================================================
+
+async function loadConnectionStatus() {
+    try {
+        const response = await fetch('/api/connection-status');
+        const data = await response.json();
+        
+        updateConnectionIndicator(data.connection_access_enabled);
+        updateConnectionButton(data.connection_access_enabled);
+        
+    } catch (error) {
+        console.error('Failed to load connection status:', error);
+        updateConnectionIndicator(false);
+    }
+}
+
+async function toggleConnectionAccess() {
+    const button = document.getElementById('toggle-connections');
+    const indicator = document.getElementById('connection-indicator');
+    const statusText = document.getElementById('connection-status-text');
+    
+    // Get current status
+    const currentStatus = indicator.style.backgroundColor === 'rgb(76, 175, 80)'; // Green color
+    const action = currentStatus ? 'disable' : 'enable';
+    
+    button.disabled = true;
+    button.textContent = 'Updating...';
+    
+    try {
+        const response = await fetch('/api/connection-control', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ action: action })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            updateConnectionIndicator(data.connection_access_enabled);
+            updateConnectionButton(data.connection_access_enabled);
+            
+            // Show success message
+            const originalText = statusText.textContent;
+            statusText.textContent = data.message;
+            setTimeout(() => {
+                statusText.textContent = originalText;
+            }, 3000);
+        } else {
+            alert(`Failed to ${action} connections: ${data.error}`);
+        }
+        
+    } catch (error) {
+        console.error(`Failed to ${action} connections:`, error);
+        alert(`Failed to ${action} connections: ${error.message}`);
+    } finally {
+        button.disabled = false;
+        updateConnectionButton(indicator.style.backgroundColor === 'rgb(76, 175, 80)');
+    }
+}
+
+function updateConnectionIndicator(isEnabled) {
+    const indicator = document.getElementById('connection-indicator');
+    const statusText = document.getElementById('connection-status-text');
+    
+    if (isEnabled) {
+        indicator.style.backgroundColor = '#4caf50'; // Green
+        statusText.textContent = 'External connections enabled';
+    } else {
+        indicator.style.backgroundColor = '#f44336'; // Red
+        statusText.textContent = 'External connections disabled';
+    }
+}
+
+function updateConnectionButton(isEnabled) {
+    const button = document.getElementById('toggle-connections');
+    
+    if (isEnabled) {
+        button.textContent = 'Disable External Connections';
+        button.style.backgroundColor = '#f44336';
+        button.style.color = 'white';
+    } else {
+        button.textContent = 'Enable External Connections';
+        button.style.backgroundColor = '#4caf50';
+        button.style.color = 'white';
+    }
+}
+
+async function loadServerInfo() {
+    try {
+        const response = await fetch('/api/server-info');
+        const data = await response.json();
+        
+        const rows = document.getElementById('server-info-rows');
+        
+        const rowData = [];
+        
+        // Server information
+        if (data.status) rowData.push(['Status', data.status]);
+        if (data.service) rowData.push(['Service', data.service]);
+        if (data.hostname) rowData.push(['Hostname', data.hostname]);
+        if (data.local_ip) rowData.push(['Local IP', data.local_ip]);
+        if (data.connection_status) rowData.push(['Connection Status', data.connection_status]);
+        if (data.accessible_from_network !== undefined) rowData.push(['Network Access', data.accessible_from_network ? 'Enabled' : 'Disabled']);
+        if (data.cors_enabled !== undefined) rowData.push(['CORS Enabled', data.cors_enabled ? 'Yes' : 'No']);
+        
+        // Port information
+        if (data.port_info) {
+            if (data.port_info.default_port) rowData.push(['Default Port', data.port_info.default_port]);
+        }
+        
+        // Display all data
+        if (rowData.length === 0) {
+            rows.innerHTML = '<tr><td colspan="2">No server data available</td></tr>';
+        } else {
+            rows.innerHTML = rowData.map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td></tr>`).join('');
+        }
+        
+    } catch (error) {
+        document.getElementById('server-info-rows').innerHTML = `<tr><td colspan="2">Error loading server info: ${error.message}</td></tr>`;
+    }
+}
 
 // ============================================================================
 // END OF RENDERSYNC CORE JAVASCRIPT

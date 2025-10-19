@@ -3,8 +3,6 @@
 # For a network module refer to rendersync/modules/network.py, this one should be about:
 # Hardware inspection, Computer Specs, Application PID, Application Memory, GPU, RAM, ROM, etc.
 
-
-# Default Python Modules
 import os
 import platform
 import subprocess
