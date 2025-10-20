@@ -6,7 +6,7 @@ Running the system and developing:
 - Windows 11 Laptop, NVIDIA GeForce RTX 4050 6Gb. 
 - Windows 11 Desktop, NVIDIA Geforce RTX 3090 24Gb. 
 
-The purpose of this project is to provide an adaptive piece of software that runs in Windows/Linux terminals and is accessible through the browser; it has its own dedicated server, the Core, and several Modules plug in.
+The purpose of this project is to run on Windows/Linux terminals and be accessible through the browser; it has its own dedicated server, and "modules" plug in.
 
 
 ### Dependencies:  
@@ -24,6 +24,7 @@ httpx>=0.27.0
 pydantic>=2.7.0
 psutil>=5.9.8
 python-multipart
+
 # JavaScript
 bootstrap==5.3.8
 ```
