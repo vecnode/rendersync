@@ -11,6 +11,10 @@ document.addEventListener('DOMContentLoaded', function() {
     loadComfyUIWorkflows();
     loadConnectionStatus();
     loadServerInfo();
+    updateDashboardStatus();
+    
+    // Set up periodic dashboard updates
+    setInterval(updateDashboardStatus, 30000); // Update every 30 seconds
 });
 
 
@@ -1874,6 +1878,68 @@ async function loadServerInfo() {
         
     } catch (error) {
         document.getElementById('server-info-rows').innerHTML = `<tr><td colspan="2">Error loading server info: ${error.message}</td></tr>`;
+    }
+}
+
+// ============================================================================
+// DASHBOARD STATUS FUNCTIONS
+// ============================================================================
+
+async function updateDashboardStatus() {
+    try {
+        // Update connection count
+        const connectionsResponse = await fetch('/api/connections');
+        const connectionsData = await connectionsResponse.json();
+        if (connectionsData.success) {
+            const connectionCountElement = document.getElementById('dashboard-connections');
+            if (connectionCountElement) {
+                connectionCountElement.textContent = connectionsData.connections.length;
+            }
+        }
+
+        // Update Ollama status
+        const ollamaResponse = await fetch('/api/ollama-status');
+        const ollamaData = await ollamaResponse.json();
+        if (!ollamaData.error) {
+            const ollamaStatusElement = document.getElementById('dashboard-ollama-status');
+            const ollamaBadgeElement = document.getElementById('dashboard-ollama-badge');
+            
+            if (ollamaStatusElement) {
+                ollamaStatusElement.textContent = ollamaData.running ? 'Running' : 'Stopped';
+                ollamaStatusElement.className = ollamaData.running ? 'h5 mb-0 text-success' : 'h5 mb-0 text-gray-800';
+            }
+            if (ollamaBadgeElement) {
+                ollamaBadgeElement.textContent = ollamaData.running ? 'Running' : 'Stopped';
+                ollamaBadgeElement.className = ollamaData.running ? 'badge bg-success' : 'badge bg-secondary';
+            }
+        }
+
+        // Update ComfyUI status
+        const comfyuiResponse = await fetch('/api/comfyui-status');
+        const comfyuiData = await comfyuiResponse.json();
+        if (!comfyuiData.error) {
+            const comfyuiStatusElement = document.getElementById('dashboard-comfyui-status');
+            const comfyuiBadgeElement = document.getElementById('dashboard-comfyui-badge');
+            
+            if (comfyuiStatusElement) {
+                comfyuiStatusElement.textContent = comfyuiData.running ? 'Running' : 'Stopped';
+                comfyuiStatusElement.className = comfyuiData.running ? 'h5 mb-0 text-success' : 'h5 mb-0 text-gray-800';
+            }
+            if (comfyuiBadgeElement) {
+                comfyuiBadgeElement.textContent = comfyuiData.running ? 'Running' : 'Stopped';
+                comfyuiBadgeElement.className = comfyuiData.running ? 'badge bg-success' : 'badge bg-secondary';
+            }
+        }
+
+        // Update server status
+        const serverStatusElement = document.getElementById('dashboard-server-status');
+        if (serverStatusElement) {
+            serverStatusElement.textContent = 'Online';
+            serverStatusElement.className = 'h5 mb-0 text-success';
+        }
+
+    } catch (error) {
+        console.error('Failed to update dashboard status:', error);
     }
 }
 

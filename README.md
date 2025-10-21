@@ -77,6 +77,7 @@ curl http://YOUR_SERVER_IP:8080/api/server-info
 
 #### In development
 
+- Need to fix apps running checks on the backend threaded
 - Test calling renders from secondary `rendersync` to a machine with 24Gb and call SD1.5    
 - Add timings to execute on clock and checking if process if on first - safe.    
 - Add trainer file as module - fine-tuning stack to see.    
