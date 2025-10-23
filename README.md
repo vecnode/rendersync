@@ -45,7 +45,7 @@ ComfyUI (e.g. version 0.3.64)
     - Automated build designed for PowerShell `run.ps1`  
     - Uses `.venv`, install, start server and open Browser
 - Modules
-    - System: The `rendersync` computer
+    - System: The `rendersync`
     - Network: The network in which the System runs
     - Ollama:
         - Inspect, 
@@ -67,30 +67,24 @@ _____________________________
 # ollama utils
 ollama pull llama3.2:3b 
 ollama pull gemma3:1b
-ollama list  
-
-# Replace YOUR_SERVER_IP with the actual IP address
-curl http://YOUR_SERVER_IP:8080/health
-curl http://YOUR_SERVER_IP:8080/api/server-info
+ollama list
 ```
 
 
 #### In development
 
-- Need to fix apps running checks on the backend threaded
 - Test calling renders from secondary `rendersync` to a machine with 24Gb and call SD1.5    
 - Add timings to execute on clock and checking if process if on first - safe.    
 - Add trainer file as module - fine-tuning stack to see.    
 - Make only one table per module and ability to open if continuous on a new tab
 - Get the progress bar from the models generating on comfy terminal to the browser.   
 - Check more Host OSs, multiple machines.   
-- Available Models in every system that we have to download and everything. in one line with the combo.  Comfy too   
 - Fast way to search for model types such as `.pt` and `.safetensors` or `.gguf`   
 - Inspect Torch processes on the network and tensor computation.   
 - Call jobs through SSH.      
 - Ollama scheduling so we can make questions at specific times of day and weeks in a row.     
 - Refactor the codebase to act only on one Disk `C:/` at the time and we can change according to what we can see at the top.     
-- Make this server receive json calls that are sent to the comfyui as well and ollama, maybe a structured rendersync JSON file that is read through the server, the ability to have specific jobs called through rendersync - such as image-to-image.   
+- Structured rendersync JSON file that is read through the server, the ability to have specific jobs called through rendersync - such as image-to-image.   
 - A comparison module with some metrics.
 - Call ollama on a different machine same network. 
 - Maybe consider multiple rendersyncs for multiple users constantly on.  

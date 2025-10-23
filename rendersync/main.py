@@ -16,8 +16,8 @@ import json
 # FastAPI framework imports for web API functionality
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, Response
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # ============================================================================
@@ -33,6 +33,7 @@ from .modules.utilities import track_spawned_process, check_application_timeout,
 # AI service integration modules
 from .modules.ollama import OllamaManager, OllamaClient
 from .modules.comfyui import ComfyUIManager
+
 from .comfy_api import ComfyUIClient, load_workflow_from_file
 from .config import OLLAMA_BASE_URL
 
@@ -252,46 +253,97 @@ ollama_app_directory, comfyui_app_directory = discover_app_directories()
 
 app = FastAPI(title="rendersync core", version="0.1.0")
 
-# Custom CORS middleware that respects connection control
-class DynamicCORSMiddleware:
-    def __init__(self, app):
-        self.app = app
+# ============================================================================
+# CONNECTION CONTROL HELPER
+# ============================================================================
+# 
+# ENDPOINT CATEGORIZATION:
+# 
+# @private_endpoint - Internal rendersync endpoints (always accessible from localhost)
+#   - /api/connection-control (enable/disable external access)
+#   - /api/connection-status (check current status)
+#   - /api/shutdown (terminate server)
+#   - Static files and web interface
+#
+# @public_endpoint - External API endpoints (controlled by connection_access_enabled)
+#   - /api/process-status (system information)
+#   - /api/inspect-port (port inspection)
+#   - /api/ping-ip (network testing)
+#   - Any endpoint meant for external applications
+#
+# USAGE:
+#   - Private endpoints: Always work, even when external connections disabled
+#   - Public endpoints: Blocked for external IPs when connection_access_enabled = False
+#   - Localhost: Always allowed for both types
+#
+# ============================================================================
 
-    async def __call__(self, scope, receive, send):
-        if scope["type"] == "http":
-            # Check if external connections are allowed
-            if not connection_access_enabled:
-                # Block external requests (not from localhost)
-                client_ip = scope.get("client", ["unknown"])[0]
-                if client_ip not in ["127.0.0.1", "::1", "localhost"]:
-                    response = Response(
-                        content='{"error": "External connections disabled"}',
-                        status_code=403,
-                        media_type="application/json"
-                    )
-                    await response(scope, receive, send)
-                    return
+def check_connection_access(request: Request):
+    """Check if external connections are allowed. Always allow localhost."""
+    client_ip = request.client.host if request.client else "unknown"
+    
+    # Always allow localhost for management
+    if client_ip in ["127.0.0.1", "::1", "localhost"]:
+        return True
+    
+    # Check if external connections are enabled
+    return connection_access_enabled
 
-        # Apply CORS headers
-        if scope["type"] == "http":
-            headers = []
-            headers.append((b"access-control-allow-origin", b"*" if connection_access_enabled else b"null"))
-            headers.append((b"access-control-allow-methods", b"GET, POST, PUT, DELETE, OPTIONS"))
-            headers.append((b"access-control-allow-headers", b"*"))
-            headers.append((b"access-control-allow-credentials", b"true"))
-            
-            # Add headers to response
-            async def send_wrapper(message):
-                if message["type"] == "http.response.start":
-                    message["headers"].extend(headers)
-                await send(message)
-            
-            await self.app(scope, receive, send_wrapper)
-        else:
-            await self.app(scope, receive, send)
+def require_connection_access(func):
+    """Decorator to check connection access for endpoints."""
+    async def wrapper(*args, **kwargs):
+        # Find the Request object in the arguments
+        request = None
+        for arg in args:
+            if isinstance(arg, Request):
+                request = arg
+                break
+        
+        if request and not check_connection_access(request):
+            raise HTTPException(status_code=403, detail="External connections disabled")
+        
+        return await func(*args, **kwargs)
+    return wrapper
 
-app.add_middleware(DynamicCORSMiddleware)
+def public_endpoint(func):
+    """Decorator for public endpoints that should be controlled by connection_access_enabled."""
+    async def wrapper(*args, **kwargs):
+        # Find the Request object in the arguments
+        request = None
+        for arg in args:
+            if isinstance(arg, Request):
+                request = arg
+                break
+        
+        # If no Request found in args, try to get it from kwargs
+        if not request:
+            request = kwargs.get('request')
+        
+        if request and not check_connection_access(request):
+            raise HTTPException(status_code=403, detail="External connections disabled")
+        
+        return await func(*args, **kwargs)
+    return wrapper
 
+def private_endpoint(func):
+    """Decorator for private endpoints that are only for internal rendersync use."""
+    # Private endpoints don't need connection checks - they're internal only
+    return func
+
+# ============================================================================
+# MIDDLEWARE
+# ============================================================================
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ============================================================================
 # Mount static files
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 if os.path.exists(static_dir):
@@ -348,23 +400,26 @@ async def _shutdown() -> None:
 # ============================================================================
 
 @app.get("/")
-async def root():
+@private_endpoint
+async def root(request: Request):
     # Main page: serves index.html from static directory, fallback to API info
     """Serve the main HTML page."""
     static_dir = os.path.join(os.path.dirname(__file__), "static")
     html_path = os.path.join(static_dir, "index.html")
     if os.path.exists(html_path):
         return FileResponse(html_path)
-    return {"message": "rendersync server", "docs": "/docs"}
+    return {"message": "rendersync", "docs": "/docs"}
 
 @app.get("/favicon.ico")
-async def favicon():
+@private_endpoint
+async def favicon(request: Request):
     # Favicon: returns empty response to prevent 404 errors
     """Serve favicon to prevent 404 errors."""
     return Response(content="", media_type="image/x-icon")
 
 @app.get("/.well-known/appspecific/com.chrome.devtools.json")
-async def chrome_devtools():
+@private_endpoint
+async def chrome_devtools(request: Request):
     # Chrome DevTools: returns metadata for Chrome developer tools integration
     """Handle Chrome DevTools metadata request."""
     return {"version": "1.0", "name": "rendersync"}
@@ -375,18 +430,21 @@ async def chrome_devtools():
 # ============================================================================
 
 @app.get("/api/system-info")
+@private_endpoint
 async def system_info():
     # System info: no input, returns complete system specifications and hardware data
     """Get system information."""
     return get_system_info_data()
 
 @app.get("/api/network-info")
+@private_endpoint
 async def network_info():
     # Network info: no input, returns network interfaces, IPs and connectivity data
     """Get network information."""
     return get_network_info_data()
 
 @app.get("/api/terminal-info")
+@private_endpoint
 async def terminal_info():
     # Terminal info: no input, returns active terminal sessions and shell information
     """Get terminal information."""
@@ -401,22 +459,20 @@ async def terminal_info():
 # ============================================================================
 
 @app.get("/health")
+@private_endpoint
 async def health():
     # Health check: no input, returns simple status confirmation
     """Simple health check endpoint."""
     return {"status": "ok", "service": "rendersync"}
 
 @app.get("/api/server-info")
+@private_endpoint
 async def server_info():
     # Server info: no input, returns server details and network accessibility
     """Get server information and network details."""
     import socket
-    
-    # Get local IP address
     hostname = socket.gethostname()
     local_ip = socket.gethostbyname(hostname)
-    
-    # Get port info
     port_info = get_port_info()
     
     return {
@@ -430,7 +486,31 @@ async def server_info():
         "connection_status": "enabled" if connection_access_enabled else "disabled"
     }
 
+@app.post("/api/shutdown")
+@private_endpoint
+async def shutdown_server():
+    """Shutdown the rendersync server."""
+    try:
+        # Schedule shutdown after response is sent
+        import asyncio
+        asyncio.create_task(delayed_shutdown())
+        
+        return {
+            "success": True,
+            "message": "Server shutdown initiated",
+            "timestamp": __import__('datetime').datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Shutdown failed: {str(e)}")
+
+async def delayed_shutdown():
+    """Delayed shutdown to allow response to be sent."""
+    await asyncio.sleep(1)  # Give time for response to be sent
+    print("\033[91mShutting down rendersync server...\033[0m")
+    import os
+    os._exit(0)  # Force exit the process
 @app.post("/api/connection-control")
+@private_endpoint
 async def connection_control(request: dict):
     # Connection control: takes action (enable/disable), controls external connection access
     """Enable or disable external connections to the server."""
@@ -463,6 +543,7 @@ async def connection_control(request: dict):
         raise HTTPException(status_code=500, detail=f"Connection control failed: {str(e)}")
 
 @app.get("/api/connection-status")
+@private_endpoint
 async def connection_status():
     # Connection status: no input, returns current connection control status
     """Get current connection control status."""
@@ -477,21 +558,24 @@ async def connection_status():
 
 
 @app.get("/api/process-status")
-async def process_status():
+@public_endpoint
+async def process_status(request: Request):
     # Process status: no input, returns process management status and tracked processes
     """Get process management status."""
     return get_application_status()
 
 
 @app.get("/api/port-info")
-async def port_info():
+@private_endpoint
+async def port_info(request: Request):
     # Port info: no input, returns port management information and availability
     """Get port management information."""
     return get_port_info()
 
 
 @app.post("/api/inspect-port")
-async def inspect_port_endpoint(request: PortInspectionRequest):
+@private_endpoint
+async def inspect_port_endpoint(request: PortInspectionRequest, http_request: Request):
     # Port inspection: takes port number, returns detailed port status and bound processes
     """Inspect a specific port and return detailed information."""
     try:
@@ -502,6 +586,7 @@ async def inspect_port_endpoint(request: PortInspectionRequest):
 
 
 @app.post("/api/inspect-pid")
+@private_endpoint
 async def inspect_pid_endpoint(request: PIDInspectionRequest):
     # PID inspection: takes process ID, returns detailed process information and resource usage
     """Inspect a specific PID and return detailed process information."""
@@ -513,9 +598,15 @@ async def inspect_pid_endpoint(request: PIDInspectionRequest):
 
 
 @app.post("/api/ping-ip")
-async def ping_ip_endpoint(request: PingRequest):
+@private_endpoint
+async def ping_ip_endpoint(request: PingRequest, http_request: Request):
     # Single ping: takes target IP/hostname and optional port, returns connectivity test results
     """Ping an IP address or hostname and optionally check a specific port."""
+    
+    # Check connection access
+    if not check_connection_access(http_request):
+        raise HTTPException(status_code=403, detail="External connections disabled")
+    
     try:
         result = ping_ip_data(request.target, request.port, request.timeout)
         return result
@@ -524,6 +615,7 @@ async def ping_ip_endpoint(request: PingRequest):
 
 
 @app.post("/api/ping-multiple")
+@private_endpoint
 async def ping_multiple_endpoint(request: MultiPingRequest):
     # Multi ping: takes list of targets and optional port, returns parallel connectivity test results
     """Ping multiple IPs sequentially for network scanning."""
@@ -539,6 +631,7 @@ async def ping_multiple_endpoint(request: MultiPingRequest):
 # ============================================================================
 
 @app.get("/api/ollama-status")
+@private_endpoint
 async def ollama_status():
     # Ollama status: no input, returns installation status, version, running state and API health
     """Get Ollama installation and running status."""
@@ -596,6 +689,7 @@ async def ollama_status():
 
 
 @app.post("/api/ollama-stop")
+@private_endpoint
 async def ollama_stop():
     # Ollama stop: no input, terminates all Ollama processes and returns termination results
     """Stop all Ollama processes running on the system."""
@@ -609,6 +703,7 @@ async def ollama_stop():
 
 
 @app.post("/api/ollama-start")
+@private_endpoint
 async def ollama_start():
     # Ollama start: no input, launches Ollama service on Windows and returns startup results
     """Start Ollama on Windows 10/11 as if double-clicked by user."""
@@ -622,6 +717,7 @@ async def ollama_start():
 
 
 @app.get("/api/ollama-models")
+@private_endpoint
 async def ollama_models():
     # Ollama models: no input, returns list of available language models and their status
     """Get available Ollama models."""
@@ -639,6 +735,7 @@ async def ollama_models():
 # ============================================================================
 
 @app.post("/api/connections")
+@private_endpoint
 async def register_connection(request: dict):
     """Register a new browser connection."""
     try:
@@ -674,6 +771,7 @@ async def register_connection(request: dict):
         raise HTTPException(status_code=500, detail=f"Failed to register connection: {str(e)}")
 
 @app.get("/api/connections")
+@private_endpoint
 async def get_connections():
     """Get all active connections."""
     try:
@@ -698,6 +796,7 @@ async def get_connections():
         raise HTTPException(status_code=500, detail=f"Failed to get connections: {str(e)}")
 
 @app.post("/api/ollama-chat")
+@private_endpoint
 async def ollama_chat(request: dict):
     # Ollama chat: takes message text and model, sends to Ollama API and returns AI response
     """Send a chat message to Ollama."""
@@ -721,6 +820,7 @@ async def ollama_chat(request: dict):
 # ============================================================================
 
 @app.get("/api/comfyui-status")
+@private_endpoint
 async def comfyui_status():
     # ComfyUI status: no input, returns installation status, running state and port information
     """Get ComfyUI installation and running status."""
@@ -734,6 +834,7 @@ async def comfyui_status():
 
 
 @app.get("/api/comfyui-output-folder")
+@private_endpoint
 async def comfyui_output_folder():
     # ComfyUI output folder: no input, returns the path to ComfyUI output folder
     """Get ComfyUI output folder path."""
@@ -763,6 +864,7 @@ async def comfyui_output_folder():
 
 
 @app.post("/api/comfyui-open-output-folder")
+@private_endpoint
 async def comfyui_open_output_folder():
     # ComfyUI open output folder: no input, opens the ComfyUI output folder in file manager
     """Open ComfyUI output folder in system file manager."""
@@ -814,6 +916,7 @@ async def comfyui_open_output_folder():
 
 
 @app.get("/api/ollama-directory")
+@private_endpoint
 async def ollama_directory():
     # Ollama directory: no input, returns the path to Ollama installation directory
     """Get Ollama installation directory path."""
@@ -839,6 +942,7 @@ async def ollama_directory():
 
 
 @app.post("/api/comfyui-stop")
+@private_endpoint
 async def comfyui_stop():
     # ComfyUI stop: no input, terminates all ComfyUI processes and returns termination results
     """Stop all ComfyUI processes running on the system."""
@@ -852,6 +956,7 @@ async def comfyui_stop():
 
 
 @app.post("/api/comfyui-start")
+@private_endpoint
 async def comfyui_start():
     # ComfyUI start: no input, launches ComfyUI service on Windows and returns startup results
     """Start ComfyUI on Windows."""
@@ -865,6 +970,7 @@ async def comfyui_start():
 
 
 @app.get("/api/apps-running-info")
+@private_endpoint
 async def apps_running_info():
     # Apps info: no input, returns running processes and resource utilization (Task Manager style)
     """Get information about running applications similar to Task Manager."""
@@ -877,6 +983,7 @@ async def apps_running_info():
 
 
 @app.post("/api/comfyui-submit-workflow")
+@private_endpoint
 async def comfyui_submit_workflow(request: dict):
     # Workflow submit: takes workflow data, client_id and seed, submits to ComfyUI and returns execution results
     """Submit a workflow to ComfyUI for execution."""
@@ -898,6 +1005,7 @@ async def comfyui_submit_workflow(request: dict):
 
 
 @app.get("/api/comfyui-queue")
+@private_endpoint
 async def comfyui_queue(request: Request):
     # ComfyUI queue: takes optional base_url query param, returns queue status and pending jobs
     """Get ComfyUI queue status."""
@@ -912,6 +1020,7 @@ async def comfyui_queue(request: Request):
 
 
 @app.get("/api/comfyui-history/{prompt_id}")
+@private_endpoint
 async def comfyui_history(prompt_id: str, request: Request):
     # ComfyUI history: takes prompt_id from URL path and optional base_url query, returns workflow execution history
     """Get workflow execution history."""
@@ -931,6 +1040,7 @@ async def comfyui_history(prompt_id: str, request: Request):
 # ============================================================================
 
 @app.get("/api/workflows")
+@private_endpoint
 async def list_workflows():
     # Workflow list: no input, returns list of available workflow JSON files
     """List all available workflow files."""
@@ -959,6 +1069,7 @@ async def list_workflows():
         raise HTTPException(status_code=500, detail=f"Failed to list workflows: {str(e)}")
 
 @app.get("/workflows/{filename}")
+@private_endpoint
 async def get_workflow(filename: str):
     # Workflow file: takes filename, returns workflow JSON content
     """Get a specific workflow file."""
@@ -1031,6 +1142,7 @@ async def upload_workflow(request: Request):
 
 
 @app.post("/api/comfyui-interrupt")
+@private_endpoint
 async def comfyui_interrupt(request: dict):
     # ComfyUI interrupt: takes optional base_url, interrupts current execution and returns interrupt results
     """Interrupt current ComfyUI execution."""
@@ -1045,6 +1157,7 @@ async def comfyui_interrupt(request: dict):
 
 
 @app.get("/api/comfyui-system-stats")
+@private_endpoint
 async def comfyui_system_stats(request: Request):
     # ComfyUI stats: takes optional base_url query param, returns system statistics and performance metrics
     """Get ComfyUI system statistics."""
@@ -1063,6 +1176,7 @@ async def comfyui_system_stats(request: Request):
 # ============================================================================
 
 @app.get("/workflow-inspector")
+@private_endpoint
 async def workflow_inspector(request: Request):
     """Workflow Inspector: Interactive workflow analysis and debugging tool."""
     try:
@@ -1083,6 +1197,7 @@ async def workflow_inspector(request: Request):
 
 
 @app.get("/api/workflow-info")
+@private_endpoint
 async def workflow_info(request: Request):
     """Get workflow file information."""
     try:

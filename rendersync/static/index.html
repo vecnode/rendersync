@@ -24,9 +24,7 @@
                         <i class="bi bi-person-circle"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#">Settings</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">Sign out</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="shutdownServer()">Sign out</a></li>
                     </ul>
                 </div>
             </div>
@@ -35,26 +33,13 @@
 
     <!-- Sidebar -->
     <div class="container-fluid">
-        <div class="row">
-            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
-                <div class="position-sticky pt-3">
+        <nav id="sidebarMenu" class="d-md-block bg-light sidebar" style="width: 260px;">
+                <div class="position-sticky pt-1">
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link active" href="#" onclick="showPage('dashboard')">
                                 <i class="bi bi-speedometer2"></i>
                                 Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="showPage('instance')">
-                                <i class="bi bi-server"></i>
-                                Instance
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="showPage('scheduler')">
-                                <i class="bi bi-clock"></i>
-                                Scheduler
                             </a>
                         </li>
                         <li class="nav-item">
@@ -71,7 +56,7 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#" onclick="showPage('comfyui')">
-                                <i class="bi bi-palette"></i>
+                                <i class="bi bi-robot"></i>
                                 ComfyUI
                             </a>
                         </li>
@@ -80,9 +65,9 @@
             </nav>
 
             <!-- Main content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <main class="px-md-4">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2" id="page-title">Dashboard</h1>
+                    <h1 class="h3" id="page-title">Dashboard</h1>
                 </div>
 
                 <!-- Page Content Container -->
@@ -90,338 +75,147 @@
                     <!-- Dashboard Page -->
                     <div id="dashboard-page" class="page-content">
                         <div class="row">
-                            <div class="col-xl-3 col-md-6 mb-4">
-                                <div class="card shadow h-100 py-2">
-                                    <div class="card-body">
-                                        <div class="row no-gutters align-items-center">
-                                            <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-muted text-uppercase mb-1">Server Status</div>
-                                                <div class="h5 mb-0 text-gray-800" id="dashboard-server-status">Online</div>
-                                            </div>
-                                            <div class="col-auto">
-                                                <i class="bi bi-server text-gray-300"></i>
-                                            </div>
+                            
+
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    Server Status
+                                </div>
+                                <div class="card-body">
+                                    <!-- Connection Control Panel -->
+                                    <button id="refresh-server-info" onclick="loadServerInfo()" class="btn btn-primary mb-3">Refresh Server Info</button>
+                                    <br>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <button id="toggle-connections" onclick="toggleConnectionAccess()" class="btn btn-outline-danger">
+                                            Disable External Connections
+                                        </button>
+                                        <div id="connection-indicator" class="rounded" style="width: 80px; height: 34px; background-color: #4caf50; border: 1px solid #6c757d; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: #212529;">
+                                            <span id="connection-status-text">Enabled</span>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-
-                            <div class="col-xl-3 col-md-6 mb-4">
-                                <div class="card shadow h-100 py-2">
-                                    <div class="card-body">
-                                        <div class="row no-gutters align-items-center">
-                                            <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-muted text-uppercase mb-1">Active Connections</div>
-                                                <div class="h5 mb-0 text-gray-800" id="dashboard-connections">0</div>
-                                            </div>
-                                            <div class="col-auto">
-                                                <i class="bi bi-people text-gray-300"></i>
-                                            </div>
-                                        </div>
+                                    <br>
+                    
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>Property</th>
+                                                    <th>Value</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="server-info-rows">
+                                            </tbody>
+                                        </table>
                                     </div>
-                                </div>
-                            </div>
-
-                            <div class="col-xl-3 col-md-6 mb-4">
-                                <div class="card shadow h-100 py-2">
-                                    <div class="card-body">
-                                        <div class="row no-gutters align-items-center">
-                                            <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-muted text-uppercase mb-1">Ollama Status</div>
-                                                <div class="h5 mb-0 text-gray-800" id="dashboard-ollama-status">Stopped</div>
-                                            </div>
-                                            <div class="col-auto">
-                                                <i class="bi bi-robot text-gray-300"></i>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-xl-3 col-md-6 mb-4">
-                                <div class="card shadow h-100 py-2">
-                                    <div class="card-body">
-                                        <div class="row no-gutters align-items-center">
-                                            <div class="col mr-2">
-                                                <div class="text-xs font-weight-bold text-muted text-uppercase mb-1">ComfyUI Status</div>
-                                                <div class="h5 mb-0 text-gray-800" id="dashboard-comfyui-status">Stopped</div>
-                                            </div>
-                                            <div class="col-auto">
-                                                <i class="bi bi-palette text-gray-300"></i>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Example Dashboard Table -->
-                        <div class="card shadow mb-4">
-                            <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">System Overview</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                                        <thead>
-                                            <tr>
-                                                <th>Service</th>
-                                                <th>Status</th>
-                                                <th>Port</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>rendersync Server</td>
-                                                <td><span class="badge bg-success">Running</span></td>
-                                                <td>8080</td>
-                                                <td><button class="btn btn-sm btn-outline-primary">Restart</button></td>
-                                            </tr>
-                                            <tr>
-                                                <td>Ollama</td>
-                                                <td><span class="badge bg-secondary" id="dashboard-ollama-badge">Stopped</span></td>
-                                                <td>11434</td>
-                                                <td><button class="btn btn-sm btn-outline-success" onclick="startOllama()">Start</button></td>
-                                            </tr>
-                                            <tr>
-                                                <td>ComfyUI</td>
-                                                <td><span class="badge bg-secondary" id="dashboard-comfyui-badge">Stopped</span></td>
-                                                <td>8188</td>
-                                                <td><button class="btn btn-sm btn-outline-success" onclick="startComfyUI()">Start</button></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Instance Page -->
-                    <div id="instance-page" class="page-content" style="display: none;">
-                        <div class="card shadow mb-4">
-                            <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">Instance Management</h6>
-                            </div>
-                            <div class="card-body">
-                                <!-- Connection Control Panel -->
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div id="connection-indicator" class="rounded-circle" style="width: 20px; height: 20px; background-color: #4caf50; border: 2px solid black;"></div>
-                                            <span id="connection-status-text">External connections enabled</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <button id="toggle-connections" onclick="toggleConnectionAccess()" class="btn btn-outline-danger">
-                        Disable External Connections
-                    </button>
-                                    </div>
-                </div>
-                
-                <!-- Server Information -->
-                                <button id="refresh-server-info" onclick="loadServerInfo()" class="btn btn-primary mb-3">Refresh Server Info</button>
-                                <div class="table-responsive">
-                                    <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Property</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="server-info-rows">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-            </div>
-        </div>
-
-                    <!-- Scheduler Page -->
-                    <div id="scheduler-page" class="page-content" style="display: none;">
-                        <div class="card shadow mb-4">
-                            <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">Scheduler</h6>
-                            </div>
-                            <div class="card-body">
-                                <p class="text-muted">Clocks, timers, and tie to functions</p>
-                                <div class="alert alert-info">
-                                    <i class="bi bi-info-circle"></i>
-                                    Scheduler functionality coming soon...
-                                </div>
-                            </div>
-                        </div>
-                        </div>    
 
                     <!-- System & Network Page -->
                     <div id="system-page" class="page-content" style="display: none;">
                         <div class="row">
-                            <div class="col-lg-6">
-                                <div class="card shadow mb-4">
-                                    <div class="card-header py-3">
-                                        <h6 class="m-0 font-weight-bold text-primary">System Information</h6>
+                            <div class="col-12">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h6 class="m-0 text-primary">System & Network Information</h6>
                                     </div>
                                     <div class="card-body">
-                                        <button id="refresh-system-info" onclick="loadSystemInfo()" class="btn btn-primary mb-3">Get System Info</button>
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Property</th>
-                                    <th>Value</th>
-                                </tr>
-                            </thead>
-                            <tbody id="system-info-rows">
-                            </tbody>
-                        </table>
-                                        </div>
-
-                                        <button id="refresh-terminal-info" onclick="loadTerminalInfo()" class="btn btn-primary mb-3">Get Terminal Info</button>
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Property</th>
-                                    <th>Value</th>
-                                </tr>
-                            </thead>
-                            <tbody id="terminal-info-rows">
-                            </tbody>
-                        </table>
-                                        </div>
-
-                                        <button id="refresh-apps-running-info" onclick="loadAppsRunningInfo()" class="btn btn-primary mb-3">Get Apps Running</button>
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Property</th>
-                                    <th>Value</th>
-                                </tr>
-                            </thead>
-                            <tbody id="apps-running-info-rows">
-                            </tbody>
-                        </table>
-                                        </div>
-                                    </div>
-                                </div>
-                    </div>
-                    
-                            <div class="col-lg-6">
-                                <div class="card shadow mb-4">
-                                    <div class="card-header py-3">
-                                        <h6 class="m-0 font-weight-bold text-primary">Network Information</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <button id="refresh-network-info" onclick="loadNetworkInfo()" class="btn btn-primary mb-3">Get Network Info</button>
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Property</th>
-                                    <th>Value</th>
-                                </tr>
-                            </thead>
-                            <tbody id="network-info-rows">
-                            </tbody>
-                        </table>
-                                        </div>
-
+                                        <!-- Action Buttons -->
                                         <div class="row mb-3">
-                                            <div class="col-md-6">
+                                            <div class="col-md-3">
+                                                <button id="refresh-system-info" onclick="loadSystemInfo()" class="btn btn-primary w-100 mb-2">Get System Info</button>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <button id="refresh-terminal-info" onclick="loadTerminalInfo()" class="btn btn-primary w-100 mb-2">Get Terminal Info</button>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <button id="refresh-apps-running-info" onclick="loadAppsRunningInfo()" class="btn btn-primary w-100 mb-2">Get Apps Running</button>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <button id="refresh-network-info" onclick="loadNetworkInfo()" class="btn btn-primary w-100 mb-2">Get Network Info</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Input Controls -->
+                                        <div class="row mb-3">
+                                            <div class="col-md-3">
                                                 <input type="number" id="port-input" class="form-control" placeholder="Port (1-65535)" min="1" max="65535">
                                             </div>
-                                            <div class="col-md-6">
-                                                <button id="inspect-port" onclick="inspectPort()" class="btn btn-outline-primary">Inspect Port</button>
+                                            <div class="col-md-3">
+                                                <button id="inspect-port" onclick="inspectPort()" class="btn btn-outline-primary w-100">Inspect Port</button>
                                             </div>
-                                        </div>
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Property</th>
-                                    <th>Value</th>
-                                </tr>
-                            </thead>
-                            <tbody id="port-inspection-rows">
-                            </tbody>
-                        </table>
-                                        </div>
-
-                                        <div class="row mb-3">
-                                            <div class="col-md-6">
+                                            
+                                            <div class="col-md-3">
                                                 <input type="text" id="pid-input" class="form-control" placeholder="Enter PID number">
                                             </div>
-                                            <div class="col-md-6">
-                                                <button id="inspect-pid" onclick="inspectPID()" class="btn btn-outline-primary">Inspect PID</button>
+                                            <div class="col-md-3">
+                                                <button id="inspect-pid" onclick="inspectPID()" class="btn btn-outline-primary w-100">Inspect PID</button>
                                             </div>
-                                        </div>
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Property</th>
-                                    <th>Value</th>
-                                </tr>
-                            </thead>
-                            <tbody id="pid-inspection-rows">
-                            </tbody>
-                        </table>
                                         </div>
 
                                         <div class="row mb-3">
                                             <div class="col-md-4">
                                                 <input type="text" id="ping-input" class="form-control" placeholder="IP address or hostname">
                                             </div>
-                                            <div class="col-md-3">
+                                            <div class="col-md-2">
                                                 <input type="number" id="ping-port-input" class="form-control" placeholder="Port (optional)" min="1" max="65535">
                                             </div>
-                                            <div class="col-md-5">
-                                                <button id="ping-ip" onclick="pingIP()" class="btn btn-outline-primary">Ping IP</button>
+                                            <div class="col-md-3">
+                                                <button id="ping-ip" onclick="pingIP()" class="btn btn-outline-primary w-100">Ping IP</button>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <button id="clear-results" onclick="clearSystemResults()" class="btn btn-outline-secondary w-100">Clear Table</button>
                                             </div>
                                         </div>
+
+                                        <!-- Unified Results Table -->
                                         <div class="table-responsive">
                                             <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Property</th>
-                                    <th>Value</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ping-results-rows">
-                            </tbody>
-                        </table>
+                                                <thead>
+                                                    <tr>
+                                                        <th>Property</th>
+                                                        <th>Value</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="system-results-rows">
+                                                    <tr>
+                                                        <td colspan="2" class="text-center text-muted">Click any button above to load system information</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        
+                                        <!-- Browser Connections -->
+                                        <div class="card mb-4">
+                                            <div class="card-header">
+                                                <h6 class="m-0 text-primary">Browser Connections</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <button id="refresh-connections" onclick="loadConnections()" class="btn btn-primary mb-3">Refresh Connections</button>
+                                                
+                                                <div id="connections-console" class="connections-console">
+                                                    <div class="console-header">
+                                                        Browser Connections
+                                                        <span id="connection-count">0 connections</span>
+                                                    </div>
+                                                    <div id="connections-log" class="console-log"></div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-
-                        <div class="card shadow mb-4">
-                            <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">Browser Connections</h6>
-                            </div>
-                            <div class="card-body">
-                                <button id="refresh-connections" onclick="loadConnections()" class="btn btn-primary mb-3">Refresh Connections</button>
-                                
-                                <div id="connections-console" class="connections-console">
-                                    <div class="console-header">
-                                        Browser Connections
-                                        <span id="connection-count">0 connections</span>
-                                    </div>
-                                    <div id="connections-log" class="console-log"></div>
-                                </div>
-                            </div>
-            </div>
-        </div>
 
                     <!-- Ollama Page -->
                     <div id="ollama-page" class="page-content" style="display: none;">
                         <div class="row">
                             <div class="col-lg-6">
-                                <div class="card shadow mb-4">
-                                    <div class="card-header py-3">
-                                        <h6 class="m-0 font-weight-bold text-primary">Ollama Management</h6>
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h6 class="m-0 text-primary">Ollama Management</h6>
                                     </div>
                                     <div class="card-body">
                                         <button id="inspect-ollama" onclick="inspectOllama()" class="btn btn-primary mb-3">Inspect ollama</button>
@@ -462,8 +256,8 @@
 
                             <div class="col-lg-6">
                                 <div class="card shadow mb-4">
-                                    <div class="card-header py-3">
-                                        <h6 class="m-0 font-weight-bold text-primary">Ollama Chat</h6>
+                                    <div class="card-header">
+                                        <h6 class="m-0 text-primary">Ollama Chat</h6>
                                     </div>
                                     <div class="card-body">
                                         <div class="mb-3">
@@ -496,8 +290,8 @@
                     <!-- ComfyUI Page -->
                     <div id="comfyui-page" class="page-content" style="display: none;">
                         <div class="card shadow mb-4">
-                            <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">ComfyUI Management</h6>
+                            <div class="card-header">
+                                <h6 class="m-0 text-primary">ComfyUI Management</h6>
                             </div>
                             <div class="card-body">
                                 <button id="inspect-comfyui" onclick="inspectComfyUI()" class="btn btn-primary mb-3">Inspect ComfyUI</button>
@@ -536,8 +330,8 @@
                         </div>
 
                         <div class="card shadow mb-4">
-                            <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">Workflow Management</h6>
+                            <div class="card-header">
+                                <h6 class="m-0 text-primary">Workflow Management</h6>
                             </div>
                             <div class="card-body">
                                 <h6>Submit ComfyUI Workflow</h6>
@@ -573,10 +367,9 @@
                             </div>
                         </div>
                     </div>
-            </div>
+                </div>
             </main>
         </div>
-    </div>
 
     <script>
         // Page navigation functionality
@@ -595,8 +388,6 @@
             const pageTitle = document.getElementById('page-title');
             const titles = {
                 'dashboard': 'Dashboard',
-                'instance': 'Instance',
-                'scheduler': 'Scheduler',
                 'system': 'System & Network',
                 'ollama': 'Ollama',
                 'comfyui': 'ComfyUI'

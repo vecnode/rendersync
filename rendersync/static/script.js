@@ -9,12 +9,7 @@
 // Load workflows when page loads
 document.addEventListener('DOMContentLoaded', function() {
     loadComfyUIWorkflows();
-    loadConnectionStatus();
-    loadServerInfo();
-    updateDashboardStatus();
-    
-    // Set up periodic dashboard updates
-    setInterval(updateDashboardStatus, 30000); // Update every 30 seconds
+    updateConnectionStatus(); // Fast connection status check
 });
 
 
@@ -1756,6 +1751,35 @@ async function submitComfyUIWorkflow() {
 
 
 // ============================================================================
+// SERVER SHUTDOWN FUNCTIONS
+// ============================================================================
+
+async function shutdownServer() {
+    if (confirm('Are you sure you want to shutdown the rendersync server? This will close the application.')) {
+        try {
+            const response = await fetch('/api/shutdown', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('Server shutdown initiated. The application will close shortly.');
+                // The server will terminate, so the page will become unresponsive
+            } else {
+                alert('Failed to shutdown server: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Failed to shutdown server:', error);
+            alert('Failed to shutdown server. Please check the console for details.');
+        }
+    }
+}
+
+// ============================================================================
 // CONNECTION CONTROL FUNCTIONS
 // ============================================================================
 
@@ -1825,10 +1849,10 @@ function updateConnectionIndicator(isEnabled) {
     
     if (isEnabled) {
         indicator.style.backgroundColor = '#4caf50'; // Green
-        statusText.textContent = 'External connections enabled';
+        statusText.textContent = 'Enabled';
     } else {
         indicator.style.backgroundColor = '#f44336'; // Red
-        statusText.textContent = 'External connections disabled';
+        statusText.textContent = 'Disabled';
     }
 }
 
@@ -1881,65 +1905,285 @@ async function loadServerInfo() {
     }
 }
 
+
 // ============================================================================
-// DASHBOARD STATUS FUNCTIONS
+// CONNECTION CONTROL FUNCTIONS
 // ============================================================================
 
-async function updateDashboardStatus() {
+async function toggleConnectionAccess() {
     try {
-        // Update connection count
-        const connectionsResponse = await fetch('/api/connections');
-        const connectionsData = await connectionsResponse.json();
-        if (connectionsData.success) {
-            const connectionCountElement = document.getElementById('dashboard-connections');
-            if (connectionCountElement) {
-                connectionCountElement.textContent = connectionsData.connections.length;
-            }
-        }
-
-        // Update Ollama status
-        const ollamaResponse = await fetch('/api/ollama-status');
-        const ollamaData = await ollamaResponse.json();
-        if (!ollamaData.error) {
-            const ollamaStatusElement = document.getElementById('dashboard-ollama-status');
-            const ollamaBadgeElement = document.getElementById('dashboard-ollama-badge');
+        const button = document.getElementById('toggle-connections');
+        const indicator = document.getElementById('connection-indicator');
+        const statusText = document.getElementById('connection-status-text');
+        
+        // Show loading state immediately
+        button.disabled = true;
+        button.textContent = 'Updating';
+        
+        // Determine current state from button text
+        const isCurrentlyEnabled = button.textContent.includes('Disable') || button.textContent.includes('Updating');
+        
+        const action = isCurrentlyEnabled ? 'disable' : 'enable';
+        
+        const response = await fetch('/api/connection-control', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ action: action })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
             
-            if (ollamaStatusElement) {
-                ollamaStatusElement.textContent = ollamaData.running ? 'Running' : 'Stopped';
-                ollamaStatusElement.className = ollamaData.running ? 'h5 mb-0 text-success' : 'h5 mb-0 text-gray-800';
+            if (result.success) {
+                // Update button text
+                if (action === 'disable') {
+                    button.textContent = 'Enable External Connections';
+                    button.className = 'btn btn-outline-success';
+                    
+                    // Update indicator
+                    indicator.style.backgroundColor = '#dc3545'; // Light red
+                    statusText.textContent = 'Disabled';
+                } else {
+                    button.textContent = 'Disable External Connections';
+                    button.className = 'btn btn-outline-danger';
+                    
+                    // Update indicator
+                    indicator.style.backgroundColor = '#4caf50'; // Light green
+                    statusText.textContent = 'Enabled';
+                }
+                
+                console.log(result.message);
+            } else {
+                console.error('Failed to toggle connection access:', result.message);
             }
-            if (ollamaBadgeElement) {
-                ollamaBadgeElement.textContent = ollamaData.running ? 'Running' : 'Stopped';
-                ollamaBadgeElement.className = ollamaData.running ? 'badge bg-success' : 'badge bg-secondary';
-            }
+        } else {
+            console.error('Failed to toggle connection access:', response.statusText);
         }
-
-        // Update ComfyUI status
-        const comfyuiResponse = await fetch('/api/comfyui-status');
-        const comfyuiData = await comfyuiResponse.json();
-        if (!comfyuiData.error) {
-            const comfyuiStatusElement = document.getElementById('dashboard-comfyui-status');
-            const comfyuiBadgeElement = document.getElementById('dashboard-comfyui-badge');
-            
-            if (comfyuiStatusElement) {
-                comfyuiStatusElement.textContent = comfyuiData.running ? 'Running' : 'Stopped';
-                comfyuiStatusElement.className = comfyuiData.running ? 'h5 mb-0 text-success' : 'h5 mb-0 text-gray-800';
-            }
-            if (comfyuiBadgeElement) {
-                comfyuiBadgeElement.textContent = comfyuiData.running ? 'Running' : 'Stopped';
-                comfyuiBadgeElement.className = comfyuiData.running ? 'badge bg-success' : 'badge bg-secondary';
-            }
-        }
-
-        // Update server status
-        const serverStatusElement = document.getElementById('dashboard-server-status');
-        if (serverStatusElement) {
-            serverStatusElement.textContent = 'Online';
-            serverStatusElement.className = 'h5 mb-0 text-success';
-        }
-
+        
     } catch (error) {
-        console.error('Failed to update dashboard status:', error);
+        console.error('Error toggling connection access:', error);
+    } finally {
+        // Re-enable button
+        button.disabled = false;
+    }
+}
+
+// Fast connection status check (doesn't load heavy server info)
+async function updateConnectionStatus() {
+    try {
+        const response = await fetch('/api/connection-status');
+        const data = await response.json();
+        
+        const button = document.getElementById('toggle-connections');
+        const indicator = document.getElementById('connection-indicator');
+        const statusText = document.getElementById('connection-status-text');
+        
+        if (data.connection_access_enabled) {
+            button.textContent = 'Disable External Connections';
+            button.className = 'btn btn-outline-danger';
+            indicator.style.backgroundColor = '#4caf50'; // Light green
+            statusText.textContent = 'Enabled';
+        } else {
+            button.textContent = 'Enable External Connections';
+            button.className = 'btn btn-outline-success';
+            indicator.style.backgroundColor = '#dc3545'; // Light red
+            statusText.textContent = 'Disabled';
+        }
+        
+    } catch (error) {
+        console.error('Error updating connection status:', error);
+    }
+}
+
+// ============================================================================
+// SYSTEM PAGE FUNCTIONS (Unified Table)
+// ============================================================================
+
+// Clear all results from the unified table
+function clearSystemResults() {
+    const rows = document.getElementById('system-results-rows');
+    rows.innerHTML = '<tr><td colspan="2" class="text-center text-muted">Click any button above to load system information</td></tr>';
+}
+
+// Generic function to display data in the unified table
+function displaySystemData(data, title) {
+    const rows = document.getElementById('system-results-rows');
+    
+    if (!data || Object.keys(data).length === 0) {
+        rows.innerHTML = `<tr><td colspan="2" class="text-center text-muted">No ${title} data available</td></tr>`;
+        return;
+    }
+    
+    const rowData = [];
+    
+    // Add data rows
+    for (const [key, value] of Object.entries(data)) {
+        if (value !== null && value !== undefined) {
+            if (key === 'terminals' && Array.isArray(value)) {
+                // Special handling for terminals array
+                rowData.push([key, `${value.length} terminals found`]);
+                
+                // Add each terminal as a separate row with collapsible details
+                value.forEach((terminal, index) => {
+                    const terminalId = `terminal-${index}`;
+                    const terminalSummary = `${terminal.icon} ${terminal.name} (PID: ${terminal.pid}) - ${terminal.status}`;
+                    
+                    rowData.push([
+                        `Terminal ${index + 1}`,
+                        `<div class="d-flex justify-content-between align-items-center">
+                            <span>${terminalSummary}</span>
+                            <button class="btn btn-xs btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#${terminalId}" aria-expanded="false" aria-controls="${terminalId}" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;">
+                                <i class="bi bi-chevron-down" style="font-size: 0.7rem;"></i>
+                            </button>
+                        </div>
+                        <div class="collapse" id="${terminalId}" data-bs-parent="#system-results-rows">
+                            <div class="card card-body py-2 mt-1">
+                                <pre class="mb-0">${JSON.stringify(terminal, null, 2)}</pre>
+                            </div>
+                        </div>`
+                    ]);
+                });
+            } else if (typeof value === 'object') {
+                rowData.push([key, JSON.stringify(value, null, 2)]);
+            } else {
+                rowData.push([key, value.toString()]);
+            }
+        }
+    }
+    
+    // Display all data
+    rows.innerHTML = rowData.map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td></tr>`).join('');
+}
+
+// Load system information
+async function loadSystemInfo() {
+    try {
+        const response = await fetch('/api/system-info');
+        const data = await response.json();
+        displaySystemData(data, 'System Information');
+    } catch (error) {
+        document.getElementById('system-results-rows').innerHTML = `<tr><td colspan="2">Error loading system info: ${error.message}</td></tr>`;
+    }
+}
+
+// Load terminal information
+async function loadTerminalInfo() {
+    try {
+        const response = await fetch('/api/terminal-info');
+        const data = await response.json();
+        displaySystemData(data, 'Terminal Information');
+    } catch (error) {
+        document.getElementById('system-results-rows').innerHTML = `<tr><td colspan="2">Error loading terminal info: ${error.message}</td></tr>`;
+    }
+}
+
+// Load apps running information
+async function loadAppsRunningInfo() {
+    try {
+        const response = await fetch('/api/apps-running-info');
+        const data = await response.json();
+        displaySystemData(data, 'Apps Running Information');
+    } catch (error) {
+        document.getElementById('system-results-rows').innerHTML = `<tr><td colspan="2">Error loading apps running info: ${error.message}</td></tr>`;
+    }
+}
+
+// Load network information
+async function loadNetworkInfo() {
+    try {
+        const response = await fetch('/api/network-info');
+        const data = await response.json();
+        displaySystemData(data, 'Network Information');
+    } catch (error) {
+        document.getElementById('system-results-rows').innerHTML = `<tr><td colspan="2">Error loading network info: ${error.message}</td></tr>`;
+    }
+}
+
+// Inspect port
+async function inspectPort() {
+    const portInput = document.getElementById('port-input');
+    const port = portInput.value;
+    
+    if (!port) {
+        alert('Please enter a port number');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/inspect-port', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ port: parseInt(port) })
+        });
+        
+        const data = await response.json();
+        displaySystemData(data, `Port ${port} Inspection`);
+    } catch (error) {
+        document.getElementById('system-results-rows').innerHTML = `<tr><td colspan="2">Error inspecting port: ${error.message}</td></tr>`;
+    }
+}
+
+// Inspect PID
+async function inspectPID() {
+    const pidInput = document.getElementById('pid-input');
+    const pid = pidInput.value;
+    
+    if (!pid) {
+        alert('Please enter a PID number');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/inspect-pid', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ pid: pid })
+        });
+        
+        const data = await response.json();
+        displaySystemData(data, `PID ${pid} Inspection`);
+    } catch (error) {
+        document.getElementById('system-results-rows').innerHTML = `<tr><td colspan="2">Error inspecting PID: ${error.message}</td></tr>`;
+    }
+}
+
+// Ping IP
+async function pingIP() {
+    const pingInput = document.getElementById('ping-input');
+    const pingPortInput = document.getElementById('ping-port-input');
+    
+    const target = pingInput.value;
+    const port = pingPortInput.value;
+    
+    if (!target) {
+        alert('Please enter an IP address or hostname');
+        return;
+    }
+    
+    try {
+        const requestBody = { target: target };
+        if (port) {
+            requestBody.port = parseInt(port);
+        }
+        
+        const response = await fetch('/api/ping-ip', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+        });
+        
+        const data = await response.json();
+        displaySystemData(data, `Ping ${target}${port ? `:${port}` : ''}`);
+    } catch (error) {
+        document.getElementById('system-results-rows').innerHTML = `<tr><td colspan="2">Error pinging: ${error.message}</td></tr>`;
     }
 }
 
